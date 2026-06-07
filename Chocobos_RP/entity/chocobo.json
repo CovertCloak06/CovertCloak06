@@ -26,13 +26,15 @@
       "scripts": {
         "animate": [
           "look_at_target",
-          "move_controller"
+          "move_controller",
+          { "hide_saddle": "query.is_saddled ? 0.0 : 1.0" }
         ]
       },
       "animations": {
         "look_at_target": "animation.chocobo.look_at_target",
         "idle": "animation.chocobo.idle",
         "walk": "animation.chocobo.walk",
+        "hide_saddle": "animation.chocobo.hide_saddle",
         "move_controller": "controller.animation.chocobo.move"
       },
       "render_controllers": [ "controller.render.chocobo" ],

@@ -5,7 +5,10 @@
       "identifier": "cb:chocobo",
       "is_spawnable": true,
       "is_summonable": true,
-      "is_experimental": false
+      "is_experimental": false,
+      "properties": {
+        "cb:can_fly": { "type": "bool", "default": false, "client_sync": true }
+      }
     },
 
     "component_groups": {
@@ -197,8 +200,8 @@
               { "weight": 15, "add": { "component_groups": ["cb:variant_green"] } },
               { "weight": 12, "add": { "component_groups": ["cb:variant_blue"] } },
               { "weight": 10, "add": { "component_groups": ["cb:variant_red"] } },
-              { "weight": 8,  "add": { "component_groups": ["cb:variant_black"] } },
-              { "weight": 5,  "add": { "component_groups": ["cb:variant_gold"] } }
+              { "weight": 8,  "add": { "component_groups": ["cb:variant_black"] }, "set_property": { "cb:can_fly": true } },
+              { "weight": 5,  "add": { "component_groups": ["cb:variant_gold"] }, "set_property": { "cb:can_fly": true } }
             ]
           }
         ]
@@ -213,8 +216,8 @@
               { "weight": 15, "add": { "component_groups": ["cb:variant_green"] } },
               { "weight": 13, "add": { "component_groups": ["cb:variant_blue"] } },
               { "weight": 11, "add": { "component_groups": ["cb:variant_red"] } },
-              { "weight": 9,  "add": { "component_groups": ["cb:variant_black"] } },
-              { "weight": 7,  "add": { "component_groups": ["cb:variant_gold"] } }
+              { "weight": 9,  "add": { "component_groups": ["cb:variant_black"] }, "set_property": { "cb:can_fly": true } },
+              { "weight": 7,  "add": { "component_groups": ["cb:variant_gold"] }, "set_property": { "cb:can_fly": true } }
             ]
           }
         ]

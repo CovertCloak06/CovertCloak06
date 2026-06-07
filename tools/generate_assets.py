@@ -29,6 +29,8 @@ TEX_W, TEX_H = 128, 64
 # ---------------------------------------------------------------------------
 ACCENT = (0xE8, 0x82, 0x1E)
 ACCENT_DARK = (0xB5, 0x63, 0x1A)
+SADDLE = (0x6B, 0x47, 0x2A)
+SADDLE_DARK = (0x4A, 0x30, 0x1C)
 
 PALETTES = {
     "yellow": ((0xF2, 0xD0, 0x2C), (0xC9, 0xA4, 0x1E), (0xFC, 0xE8, 0x8A)),
@@ -76,6 +78,14 @@ CHOCOBO_BONES = [
      "cubes": [{"origin": [0, 1, -3], "size": [4, 1, 5], "uv": [74, 22], "kind": "accent"}]},
     {"name": "foot_right", "parent": "leg_right", "pivot": [-2, 2, 0],
      "cubes": [{"origin": [-4, 1, -3], "size": [4, 1, 5], "uv": [94, 22], "kind": "accent"}]},
+    {"name": "saddle", "parent": "body", "pivot": [0, 17, 0],
+     "cubes": [
+         {"origin": [-4, 17, -3], "size": [8, 2, 8], "uv": [0, 36], "kind": "saddle"},
+         {"origin": [-4, 19, 3], "size": [8, 2, 1], "uv": [34, 36], "kind": "saddle"},
+         {"origin": [-2, 19, -3], "size": [4, 2, 1], "uv": [86, 36], "kind": "saddle"},
+         {"origin": [4, 13, -1], "size": [1, 4, 6], "uv": [54, 36], "kind": "saddle"},
+         {"origin": [-5, 13, -1], "size": [1, 4, 6], "uv": [70, 36], "kind": "saddle"},
+     ]},
 ]
 
 CHICKABO_BONES = [
@@ -160,6 +170,8 @@ def paint_cube(draw, cube, body, body_l, body_d, accent, accent_d):
     fp_h = h + d
     if cube["kind"] == "accent":
         shade(draw, u, v, fp_w, fp_h, accent, _lighten(accent), accent_d)
+    elif cube["kind"] == "saddle":
+        shade(draw, u, v, fp_w, fp_h, SADDLE, _lighten(SADDLE), SADDLE_DARK)
     else:
         shade(draw, u, v, fp_w, fp_h, body, body_l, body_d)
 
@@ -227,6 +239,51 @@ def build_gysahl_icon():
     return img
 
 
+def build_gysahl_seeds_icon():
+    img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    seed = (0x6F, 0xA8, 0x3A)
+    seed_d = (0x47, 0x6E, 0x22)
+    husk = (0xC9, 0xB8, 0x7A)
+    pts = [(4, 9), (7, 5), (9, 10), (6, 11), (10, 6), (3, 6), (8, 8), (11, 9), (5, 7)]
+    for i, (x, y) in enumerate(pts):
+        c = seed if i % 2 == 0 else husk
+        d.rectangle([x, y, x + 1, y + 1], fill=c)
+        d.point((x, y), fill=seed_d if c == seed else husk)
+    return img
+
+
+def build_crop_textures():
+    """4 growth stages for the Gysahl crop (16x16, drawn bottom-up)."""
+    leaf = (0x4F, 0xA8, 0x3A, 255)
+    leaf_d = (0x37, 0x7A, 0x28, 255)
+    leaf_l = (0x76, 0xC9, 0x55, 255)
+    root = (0xF2, 0xE8, 0xC8, 255)
+    imgs = []
+    # (top_y of growth, has_root, has_tops) per stage — smaller top_y = taller
+    stages = [(13, False, False), (10, False, False), (6, False, True), (2, True, True)]
+    for top_y, has_root, has_tops in stages:
+        img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+        d = ImageDraw.Draw(img)
+        # central clump of stalks
+        for sx in (5, 7, 9, 11):
+            jitter = (sx % 3)
+            d.line([(sx, 15), (sx - 1 + jitter, top_y + 2)], fill=leaf, width=1)
+            d.line([(sx + 1, 15), (sx + jitter, top_y + 3)], fill=leaf_d, width=1)
+        # leafy crown
+        d.ellipse([4, top_y, 12, top_y + 6], fill=leaf)
+        d.ellipse([4, top_y, 12, top_y + 6], outline=leaf_d)
+        d.point((6, top_y + 1), fill=leaf_l)
+        d.point((9, top_y + 1), fill=leaf_l)
+        if has_tops:
+            for tx in (5, 8, 11):
+                d.line([(tx, top_y + 2), (tx, top_y - 2)], fill=leaf_l, width=1)
+        if has_root:
+            d.ellipse([6, 12, 10, 15], fill=root)  # pale root peeking at soil
+        imgs.append(img)
+    return imgs
+
+
 def build_pack_icon(tag=""):
     img = Image.new("RGBA", (128, 128), (0x8E, 0xC7, 0xF0, 255))
     d = ImageDraw.Draw(img)
@@ -283,11 +340,19 @@ def main():
         baby.save(os.path.join(tex_dir, "chickabo_%s.png" % name))
         print("  wrote textures for variant:", name)
 
-    # --- item icon ---
+    # --- item icons ---
     item_dir = os.path.join(RP, "textures/items")
     os.makedirs(item_dir, exist_ok=True)
     build_gysahl_icon().save(os.path.join(item_dir, "gysahl_green.png"))
-    print("  wrote item icon: gysahl_green.png")
+    build_gysahl_seeds_icon().save(os.path.join(item_dir, "gysahl_seeds.png"))
+    print("  wrote item icons: gysahl_green.png, gysahl_seeds.png")
+
+    # --- crop block textures ---
+    block_dir = os.path.join(RP, "textures/blocks")
+    os.makedirs(block_dir, exist_ok=True)
+    for i, im in enumerate(build_crop_textures()):
+        im.save(os.path.join(block_dir, "gysahl_crop_stage_%d.png" % i))
+    print("  wrote crop stage textures (4)")
 
     # --- pack icons ---
     build_pack_icon("BP").save(os.path.join(BP, "pack_icon.png"))

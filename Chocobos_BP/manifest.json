@@ -4,20 +4,31 @@
     "name": "§eChocobos & Chickabos§r — Behavior",
     "description": "Adds rideable, breedable Chocobos and their Chickabo chicks, in six classic colour variants.\n§7Behavior Pack",
     "uuid": "c1bb7a5e-5be0-48dd-93cf-9ce561c73df1",
-    "version": [1, 0, 0],
-    "min_engine_version": [1, 20, 0]
+    "version": [1, 1, 0],
+    "min_engine_version": [1, 21, 0]
   },
   "modules": [
     {
       "type": "data",
       "uuid": "c33ed513-7a73-411d-83bb-b8b48f4ebeab",
       "version": [1, 0, 0]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "cd3fc548-5391-4acc-b778-d0231dfb4725",
+      "version": [1, 0, 0],
+      "entry": "scripts/main.js"
     }
   ],
   "dependencies": [
     {
       "uuid": "936f91c5-10d0-4e8f-8fe9-245139dc08e5",
-      "version": [1, 0, 0]
+      "version": [1, 1, 0]
+    },
+    {
+      "module_name": "@minecraft/server",
+      "version": "1.11.0"
     }
   ]
 }

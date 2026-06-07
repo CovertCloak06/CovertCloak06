@@ -4,6 +4,9 @@
   "texture_data": {
     "gysahl_green": {
       "textures": "textures/items/gysahl_green"
+    },
+    "gysahl_seeds": {
+      "textures": "textures/items/gysahl_seeds"
     }
   }
 }

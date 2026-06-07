@@ -58,6 +58,13 @@
           "rotation": ["query.target_x_rotation", "query.target_y_rotation", 0]
         }
       }
+    },
+
+    "animation.chocobo.hide_saddle": {
+      "loop": true,
+      "bones": {
+        "saddle": { "scale": 0 }
+      }
     }
   }
 }

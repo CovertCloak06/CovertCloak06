@@ -1,0 +1,12 @@
+{
+  "resource_pack_name": "chocobos",
+  "texture_name": "atlas.terrain",
+  "padding": 8,
+  "num_mip_levels": 4,
+  "texture_data": {
+    "gysahl_crop_0": { "textures": "textures/blocks/gysahl_crop_stage_0" },
+    "gysahl_crop_1": { "textures": "textures/blocks/gysahl_crop_stage_1" },
+    "gysahl_crop_2": { "textures": "textures/blocks/gysahl_crop_stage_2" },
+    "gysahl_crop_3": { "textures": "textures/blocks/gysahl_crop_stage_3" }
+  }
+}
