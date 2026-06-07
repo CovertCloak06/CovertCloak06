@@ -1,6 +1,9 @@
 # Build artifacts (regenerate with tools/build_mcaddon.sh)
 /dist/
 
+# Netlify CLI local state
+/.netlify/
+
 # Python
 __pycache__/
 *.pyc
