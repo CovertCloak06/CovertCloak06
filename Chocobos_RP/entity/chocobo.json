@@ -1,0 +1,45 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "cb:chocobo",
+      "min_engine_version": "1.20.0",
+      "materials": { "default": "entity_alphatest" },
+      "textures": {
+        "yellow": "textures/entity/chocobo/chocobo_yellow",
+        "black": "textures/entity/chocobo/chocobo_black",
+        "red": "textures/entity/chocobo/chocobo_red",
+        "blue": "textures/entity/chocobo/chocobo_blue",
+        "green": "textures/entity/chocobo/chocobo_green",
+        "gold": "textures/entity/chocobo/chocobo_gold",
+        "baby_yellow": "textures/entity/chocobo/chickabo_yellow",
+        "baby_black": "textures/entity/chocobo/chickabo_black",
+        "baby_red": "textures/entity/chocobo/chickabo_red",
+        "baby_blue": "textures/entity/chocobo/chickabo_blue",
+        "baby_green": "textures/entity/chocobo/chickabo_green",
+        "baby_gold": "textures/entity/chocobo/chickabo_gold"
+      },
+      "geometry": {
+        "chocobo": "geometry.chocobo",
+        "chickabo": "geometry.chickabo"
+      },
+      "scripts": {
+        "animate": [
+          "look_at_target",
+          "move_controller"
+        ]
+      },
+      "animations": {
+        "look_at_target": "animation.chocobo.look_at_target",
+        "idle": "animation.chocobo.idle",
+        "walk": "animation.chocobo.walk",
+        "move_controller": "controller.animation.chocobo.move"
+      },
+      "render_controllers": [ "controller.render.chocobo" ],
+      "spawn_egg": {
+        "base_color": "#F2D02C",
+        "overlay_color": "#E8821E"
+      }
+    }
+  }
+}

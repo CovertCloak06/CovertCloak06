@@ -1,0 +1,6 @@
+entity.cb:chocobo.name=Chocobo
+item.spawn_egg.entity.cb:chocobo.name=Spawn Chocobo
+item.cb:gysahl_green=Gysahl Green
+item.cb:gysahl_green.name=Gysahl Green
+action.interact.ride.chocobo=Ride
+action.interact.saddle.chocobo=Saddle

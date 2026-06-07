@@ -1,0 +1,9 @@
+{
+  "resource_pack_name": "chocobos",
+  "texture_name": "atlas.items",
+  "texture_data": {
+    "gysahl_green": {
+      "textures": "textures/items/gysahl_green"
+    }
+  }
+}
