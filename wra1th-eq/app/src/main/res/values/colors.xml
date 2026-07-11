@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="wraith_background">#FF0A0C0E</color>
+    <color name="wraith_panel">#FF15191D</color>
+    <color name="wraith_accent">#FF00E5CC</color>
+    <color name="wraith_warning">#FFFFB300</color>
+    <color name="wraith_error">#FFFF5252</color>
+    <color name="wraith_success">#FF4CAF50</color>
+    <color name="wraith_text">#FFECEFF1</color>
+    <color name="ic_launcher_background">#FF0A0C0E</color>
+</resources>
