@@ -185,19 +185,20 @@ class AudioEffectController {
         if (!isAttached) return OpResult.failure(AudioEffectError.Unsupported("Audio effects"))
         var failure: AudioEffectError? = null
         try {
-            equalizer?.enabled = enabled
+            // AudioEffect.setEnabled returns a status code, so property syntax is unavailable.
+            equalizer?.setEnabled(enabled)
         } catch (t: Throwable) {
             failure = AudioEffectError.ApplyFailed("Equalizer enable", t)
             Logger.w("Toggling equalizer failed", t)
         }
         try {
-            bassBoost?.enabled = enabled
+            bassBoost?.setEnabled(enabled)
         } catch (t: Throwable) {
             if (failure == null) failure = AudioEffectError.ApplyFailed("BassBoost enable", t)
             Logger.w("Toggling bass boost failed", t)
         }
         try {
-            loudnessEnhancer?.enabled = enabled && loudnessOn
+            loudnessEnhancer?.setEnabled(enabled && loudnessOn)
         } catch (t: Throwable) {
             if (failure == null) failure = AudioEffectError.ApplyFailed("LoudnessEnhancer enable", t)
             Logger.w("Toggling loudness failed", t)
