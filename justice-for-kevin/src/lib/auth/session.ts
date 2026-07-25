@@ -27,6 +27,13 @@ export async function getAdminSession(): Promise<AdminSession | null> {
     .maybeSingle();
 
   if (!roleRow || !isRole(roleRow.role)) return null;
+
+  // Sessions for accounts with an enrolled MFA factor must be AAL2. An aal1
+  // session (password or magic link without the TOTP challenge) gets no
+  // dashboard access — the login page runs the challenge flow.
+  const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (aal?.nextLevel === "aal2" && aal.currentLevel !== "aal2") return null;
+
   return { userId: user.id, email: user.email ?? null, role: roleRow.role };
 }
 

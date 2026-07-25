@@ -63,8 +63,10 @@ select id, 'owner' from auth.users where email = 'you@example.org';
 
 - Enable email OTP/magic link (default) and set a strong password policy if
   password auth is allowed.
-- **Enable MFA (TOTP)** and require enrollment for owner/administrator
-  accounts (Authentication → MFA).
+- **Enable MFA (TOTP)** (Authentication → MFA) and have owner/administrator
+  accounts enroll a factor. Once a factor is enrolled, the app itself
+  requires the TOTP challenge on every login — an un-challenged (aal1)
+  session gets no dashboard access.
 - Set Site URL and redirect URLs to your domain (magic-link redirects).
 - Keep JWT expiry short (default 1h) — sessions rotate on refresh.
 

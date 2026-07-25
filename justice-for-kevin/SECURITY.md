@@ -22,8 +22,11 @@ modify audit history (append-only via RLS **and** a database trigger).
 ## Authentication
 
 - Supabase Auth: passwordless magic links by default, password fallback.
-- MFA (TOTP) must be enforced for owner/administrator in the Supabase
-  dashboard (Authentication → MFA).
+- MFA (TOTP): enable enrollment in the Supabase dashboard (Authentication →
+  MFA). Once a user has an enrolled factor, the app enforces AAL2 itself:
+  `getAdminSession()` rejects aal1 sessions, and the login page runs the
+  TOTP challenge (`src/app/admin/login/login-form.tsx`) before any dashboard
+  access. Owner/administrator accounts should enroll a factor immediately.
 - Sessions are JWT-based with rotation on refresh; middleware
   (`src/middleware.ts`) refreshes tokens and gates `/admin`.
 - Cookies: httpOnly, SameSite=Lax, Secure in production.

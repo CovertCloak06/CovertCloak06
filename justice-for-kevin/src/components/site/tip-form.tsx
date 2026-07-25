@@ -34,6 +34,7 @@ import { categoryLabel, formatTipReport, sourceLabel } from "@/lib/report";
 import {
   isAcceptedFile,
   MAX_ATTACHMENT_BYTES,
+  MAX_TOTAL_UPLOAD_BYTES,
   SOURCE_CLASSIFICATIONS,
   TIP_CATEGORIES,
   tipSchema,
@@ -245,6 +246,12 @@ export function TipForm({
     }
   };
 
+  const totalAttachmentBytes = (values.attachments ?? []).reduce(
+    (sum, meta) => sum + meta.sizeBytes,
+    0,
+  );
+  const overUploadLimit = totalAttachmentBytes > MAX_TOTAL_UPLOAD_BYTES;
+
   const mailtoWithBody = report
     ? `${detectiveMailtoHref(caseInfo)}&body=${encodeURIComponent(report.length > 1800 ? `${report.slice(0, 1800)}\n\n[Report truncated — full report attached as PDF or pasted from clipboard]` : report)}`
     : detectiveMailtoHref(caseInfo);
@@ -431,8 +438,10 @@ export function TipForm({
       {step === "attachments" ? (
         <div className="mt-6">
           <p className="text-sm text-charcoal-600">
-            Accepted: jpg, jpeg, png, webp, heic, mp4, mov, pdf, txt · max {formatBytes(MAX_ATTACHMENT_BYTES)} per file.
-            Original files are never resized or recompressed; each file is fingerprinted with a SHA-256 integrity hash.
+            Accepted: jpg, jpeg, png, webp, heic, mp4, mov, pdf, txt · max {formatBytes(MAX_ATTACHMENT_BYTES)} per file
+            ({formatBytes(MAX_TOTAL_UPLOAD_BYTES)} total for a single secure upload — larger material can be
+            provided to the detective directly). Original files are never resized or recompressed; each file is
+            fingerprinted with a SHA-256 integrity hash.
           </p>
           <label className="mt-4 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-charcoal-300 bg-white p-8 text-charcoal-600 hover:border-steel-600">
             <Paperclip aria-hidden />
@@ -567,10 +576,22 @@ export function TipForm({
                   <TurnstileWidget onToken={setTurnstileToken} />
                 </div>
                 {secureResult?.ok ? (
-                  <p role="status" className="mt-4 rounded-lg border border-steel-600 bg-steel-100 p-4 font-medium">
-                    Received. Your lead reference number is <strong>{secureResult.leadReference}</strong>.
-                    Keep it for follow-up.
-                  </p>
+                  <div role="status" className="mt-4 rounded-lg border border-steel-600 bg-steel-100 p-4">
+                    <p className="font-medium">
+                      Received. Your lead reference number is{" "}
+                      <strong>{secureResult.leadReference}</strong>. Keep it for follow-up.
+                      {secureResult.storedAttachments > 0
+                        ? ` ${secureResult.storedAttachments} attachment${secureResult.storedAttachments === 1 ? "" : "s"} stored.`
+                        : ""}
+                    </p>
+                    {secureResult.failedAttachments.length > 0 ? (
+                      <p role="alert" className="mt-2 rounded border border-urgent-700 bg-urgent-100 p-3 text-sm font-medium">
+                        These files were NOT stored and have not been delivered:{" "}
+                        {secureResult.failedAttachments.join(", ")}. Please email them to
+                        Detective Cox directly, referencing {secureResult.leadReference}.
+                      </p>
+                    ) : null}
+                  </div>
                 ) : (
                   <>
                     {secureResult && !secureResult.ok ? (
@@ -578,11 +599,19 @@ export function TipForm({
                         {secureResult.error}
                       </p>
                     ) : null}
+                    {overUploadLimit ? (
+                      <p role="alert" className="mt-4 rounded-lg border border-urgent-700 bg-urgent-100 p-3 text-sm">
+                        Attachments total {formatBytes(totalAttachmentBytes)}, above the{" "}
+                        {formatBytes(MAX_TOTAL_UPLOAD_BYTES)} limit for a single secure upload.
+                        Remove some files (they stay listed in your report manifest) and provide
+                        them to Detective Cox directly.
+                      </p>
+                    ) : null}
                     <Button
                       variant="primary"
                       size="lg"
                       className="mt-4"
-                      disabled={submitting}
+                      disabled={submitting || overUploadLimit}
                       onClick={submitSecurely}
                     >
                       {submitting ? <Loader2 aria-hidden className="animate-spin" /> : <ShieldCheck aria-hidden />}

@@ -49,8 +49,14 @@ export const ACCEPTED_MIME_TYPES = [
   "text/plain",
 ] as const;
 
-/** Configurable server-side; this is the default ceiling. */
+/** Configurable server-side; this is the default per-file ceiling. */
 export const MAX_ATTACHMENT_BYTES = 100 * 1024 * 1024;
+
+/** Aggregate ceiling for a single secure-intake upload request — the Server
+ * Action body limit (next.config.ts) is sized just above this. Direct
+ * delivery (email/PDF manifest) is not affected; larger material should be
+ * provided to the detective directly. */
+export const MAX_TOTAL_UPLOAD_BYTES = 100 * 1024 * 1024;
 
 export const attachmentMetaSchema = z.object({
   filename: z.string().min(1).max(255),

@@ -23,20 +23,6 @@ export async function recordQrScan(rawSrc: string): Promise<void> {
 
   await admin.from("qr_scans").insert({ campaign_slug: slug, referrer_host: referrerHost });
 
-  // Maintain first/last/scan_count on the campaign row when it exists.
-  const { data: campaign } = await admin
-    .from("campaigns")
-    .select("id, scan_count, first_scan_at")
-    .eq("slug", slug)
-    .maybeSingle();
-  if (campaign) {
-    await admin
-      .from("campaigns")
-      .update({
-        scan_count: (campaign.scan_count ?? 0) + 1,
-        first_scan_at: campaign.first_scan_at ?? new Date().toISOString(),
-        last_scan_at: new Date().toISOString(),
-      })
-      .eq("id", campaign.id);
-  }
+  // Atomic counter update (see migration 0003) — concurrent scans each land.
+  await admin.rpc("record_campaign_scan", { p_slug: slug });
 }

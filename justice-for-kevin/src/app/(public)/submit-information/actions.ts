@@ -11,10 +11,15 @@ import { normalizeEmail, normalizePhone } from "@/lib/normalize";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { categoryLabel } from "@/lib/report";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
-import { isAcceptedFile, MAX_ATTACHMENT_BYTES, tipSchema } from "@/lib/tip-schema";
+import {
+  isAcceptedFile,
+  MAX_ATTACHMENT_BYTES,
+  MAX_TOTAL_UPLOAD_BYTES,
+  tipSchema,
+} from "@/lib/tip-schema";
 
 export type SecureIntakeResult =
-  | { ok: true; leadReference: string }
+  | { ok: true; leadReference: string; storedAttachments: number; failedAttachments: string[] }
   | { ok: false; error: string };
 
 /**
@@ -100,10 +105,25 @@ export async function submitSecureTip(formData: FormData): Promise<SecureIntakeR
     }
 
     // Store original attachments privately, verifying size/type/hash.
+    // Every file that cannot be fully persisted (rejected, upload error, or
+    // metadata insert error) is reported back so the submitter never
+    // believes material was delivered when it was not.
     const files = formData.getAll("files") as File[];
+    const failedAttachments: string[] = [];
+    let storedAttachments = 0;
+    let totalBytes = 0;
+
     for (const file of files.slice(0, 20)) {
-      if (file.size === 0 || file.size > MAX_ATTACHMENT_BYTES) continue;
-      if (!isAcceptedFile(file.name, file.type)) continue;
+      totalBytes += file.size;
+      if (
+        file.size === 0 ||
+        file.size > MAX_ATTACHMENT_BYTES ||
+        totalBytes > MAX_TOTAL_UPLOAD_BYTES ||
+        !isAcceptedFile(file.name, file.type)
+      ) {
+        failedAttachments.push(file.name);
+        continue;
+      }
 
       const bytes = new Uint8Array(await file.arrayBuffer());
       const sha256 = await sha256Hex(bytes);
@@ -117,10 +137,11 @@ export async function submitSecureTip(formData: FormData): Promise<SecureIntakeR
         });
       if (uploadError) {
         captureError(uploadError, { where: "submitSecureTip:upload" });
+        failedAttachments.push(file.name);
         continue;
       }
 
-      await admin.from("attachments").insert({
+      const { error: metaError } = await admin.from("attachments").insert({
         lead_id: lead.id,
         storage_bucket: "private-originals",
         storage_path: storagePath,
@@ -130,6 +151,12 @@ export async function submitSecureTip(formData: FormData): Promise<SecureIntakeR
         sha256,
         virus_scan_status: "pending", // integration point — see SECURITY.md
       });
+      if (metaError) {
+        captureError(metaError, { where: "submitSecureTip:attachment-meta", storagePath });
+        failedAttachments.push(file.name);
+        continue;
+      }
+      storedAttachments += 1;
     }
 
     await admin.from("lead_status_history").insert({
@@ -144,12 +171,18 @@ export async function submitSecureTip(formData: FormData): Promise<SecureIntakeR
       action: "create",
       entityType: "lead",
       entityId: lead.id,
-      afterState: { human_id: lead.human_id, channel: "web", anonymous: tip.contact.anonymous },
+      afterState: {
+        human_id: lead.human_id,
+        channel: "web",
+        anonymous: tip.contact.anonymous,
+        stored_attachments: storedAttachments,
+        failed_attachments: failedAttachments.length,
+      },
       reason: "Public secure intake",
       ip,
     });
 
-    return { ok: true, leadReference: lead.human_id };
+    return { ok: true, leadReference: lead.human_id, storedAttachments, failedAttachments };
   } catch (error) {
     captureError(error, { where: "submitSecureTip" });
     return { ok: false, error: "Unexpected error. Use the direct-delivery options." };
