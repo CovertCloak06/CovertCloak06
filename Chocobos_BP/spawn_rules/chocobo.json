@@ -1,0 +1,30 @@
+{
+  "format_version": "1.8.0",
+  "minecraft:spawn_rules": {
+    "description": {
+      "identifier": "cb:chocobo",
+      "population_control": "animal"
+    },
+    "conditions": [
+      {
+        "minecraft:spawns_on_surface": {},
+        "minecraft:brightness_filter": { "min": 7, "max": 15, "adjust_for_weather": false },
+        "minecraft:weight": { "default": 12 },
+        "minecraft:herd": { "min_size": 2, "max_size": 4 },
+        "minecraft:density_limit": { "surface": 4 },
+        "minecraft:disallow_spawns_in_bubble": {},
+        "minecraft:biome_filter": {
+          "any_of": [
+            { "test": "has_biome_tag", "operator": "==", "value": "plains" },
+            { "test": "has_biome_tag", "operator": "==", "value": "forest" },
+            { "test": "has_biome_tag", "operator": "==", "value": "savanna" },
+            { "test": "has_biome_tag", "operator": "==", "value": "jungle" },
+            { "test": "has_biome_tag", "operator": "==", "value": "taiga" },
+            { "test": "has_biome_tag", "operator": "==", "value": "birch" },
+            { "test": "has_biome_tag", "operator": "==", "value": "meadow" }
+          ]
+        }
+      }
+    ]
+  }
+}

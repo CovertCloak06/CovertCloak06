@@ -1,0 +1,17 @@
+{
+  "format_version": "1.20.0",
+  "minecraft:item": {
+    "description": {
+      "identifier": "cb:gysahl_seeds",
+      "menu_category": { "category": "nature" }
+    },
+    "components": {
+      "minecraft:icon": { "texture": "gysahl_seeds" },
+      "minecraft:max_stack_size": 64,
+      "minecraft:block_placer": {
+        "block": "cb:gysahl_crop",
+        "use_on": ["minecraft:farmland"]
+      }
+    }
+  }
+}
