@@ -1,0 +1,14 @@
+# Netlify configuration for the Justice for Kevin app.
+# This file lives inside justice-for-kevin/ and only applies when deploying
+# from this directory — it does not affect any other site in the repo.
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  # Canonical site URL used for QR codes, share links, and flyers.
+  NEXT_PUBLIC_SITE_URL = "https://justice-for-kevin.netlify.app"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
