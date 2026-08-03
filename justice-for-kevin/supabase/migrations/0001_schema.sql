@@ -1,5 +1,5 @@
 -- ============================================================================
--- Justice for Kevin — schema migration
+-- Unbroken: The Fight for Kevin — schema migration
 -- All primary keys are UUIDs; every table carries created_at/updated_at and
 -- created_by where applicable. RLS policies live in 0002_rls.sql.
 -- ============================================================================

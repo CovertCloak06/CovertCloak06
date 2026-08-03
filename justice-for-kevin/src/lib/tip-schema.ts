@@ -49,14 +49,24 @@ export const ACCEPTED_MIME_TYPES = [
   "text/plain",
 ] as const;
 
-/** Configurable server-side; this is the default per-file ceiling. */
-export const MAX_ATTACHMENT_BYTES = 100 * 1024 * 1024;
+/** Deploy-time upload ceiling in MB. Hosts that route Server Actions through
+ * a function with a small request-body limit (e.g. Netlify's 6 MB synchronous
+ * function payload) must lower this via NEXT_PUBLIC_MAX_UPLOAD_MB so the UI,
+ * schema, and server all agree; the value is inlined at build time. */
+const configuredUploadMb = Number(process.env.NEXT_PUBLIC_MAX_UPLOAD_MB);
+const uploadCapBytes =
+  Number.isFinite(configuredUploadMb) && configuredUploadMb > 0
+    ? Math.floor(configuredUploadMb * 1024 * 1024)
+    : 100 * 1024 * 1024;
+
+/** Per-file ceiling (also enforced server-side). */
+export const MAX_ATTACHMENT_BYTES = uploadCapBytes;
 
 /** Aggregate ceiling for a single secure-intake upload request — the Server
  * Action body limit (next.config.ts) is sized just above this. Direct
  * delivery (email/PDF manifest) is not affected; larger material should be
  * provided to the detective directly. */
-export const MAX_TOTAL_UPLOAD_BYTES = 100 * 1024 * 1024;
+export const MAX_TOTAL_UPLOAD_BYTES = uploadCapBytes;
 
 export const attachmentMetaSchema = z.object({
   filename: z.string().min(1).max(255),

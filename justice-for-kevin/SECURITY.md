@@ -51,8 +51,10 @@ GET mutations exist.
 ## Input & file handling
 
 - All inputs validated with Zod on the server (client validation is UX only).
-- File uploads: extension **and** MIME allowlist, 100 MB ceiling
-  (server-enforced, configurable via `attachment_limit_bytes`), SHA-256 of the
+- File uploads: extension **and** MIME allowlist, 100 MB default ceiling
+  (server-enforced; lower it per deploy with `NEXT_PUBLIC_MAX_UPLOAD_MB` on
+  hosts whose function body limit is smaller — e.g. Netlify's 6 MB
+  synchronous payload cap), SHA-256 of the
   exact original bytes, originals stored with `upsert: false` (never
   overwritten) in the private bucket, previews generated separately.
 - `virus_scan_status` on every attachment is the integration point for a

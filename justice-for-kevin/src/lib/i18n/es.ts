@@ -1,7 +1,7 @@
 import type { Dictionary } from "./en";
 
 export const es: Dictionary = {
-  siteTitle: "Justicia para Kevin",
+  siteTitle: "Inquebrantable: La lucha por Kevin",
   siteSubtitle:
     "Centro comunitario de información sobre la investigación del homicidio de Kevin Vandenbos",
   nav: {

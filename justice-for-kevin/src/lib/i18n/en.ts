@@ -1,5 +1,5 @@
 export const en = {
-  siteTitle: "Justice for Kevin",
+  siteTitle: "Unbroken: The Fight for Kevin",
   siteSubtitle:
     "Community Information Hub for the Kevin Vandenbos Homicide Investigation",
   nav: {

@@ -1,0 +1,19 @@
+# Netlify configuration for the Justice for Kevin app.
+# This file lives inside justice-for-kevin/ and only applies when deploying
+# from this directory — it does not affect any other site in the repo.
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  # Canonical site URL used for QR codes, share links, and flyers.
+  NEXT_PUBLIC_SITE_URL = "https://justice-for-kevin.netlify.app"
+  # Netlify Functions cap synchronous request bodies at 6 MB, so secure-intake
+  # uploads must stay under that (4 MB cap + multipart overhead fits). The UI,
+  # validation schema, and server action all derive their limits from this.
+  # Larger evidence files go to the detective via the direct-delivery options.
+  NEXT_PUBLIC_MAX_UPLOAD_MB = "4"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

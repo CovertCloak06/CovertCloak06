@@ -60,8 +60,13 @@ const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
       // Secure-intake uploads (attachment ceiling is enforced separately
-      // server-side; see src/lib/tip-schema.ts MAX_ATTACHMENT_BYTES).
-      bodySizeLimit: "110mb",
+      // server-side; see src/lib/tip-schema.ts MAX_ATTACHMENT_BYTES). Sized
+      // just above the deploy-time upload cap so multipart overhead fits.
+      bodySizeLimit: `${
+        Number(process.env.NEXT_PUBLIC_MAX_UPLOAD_MB) > 0
+          ? Math.ceil(Number(process.env.NEXT_PUBLIC_MAX_UPLOAD_MB) * 1.1)
+          : 110
+      }mb`,
     },
   },
   async headers() {
