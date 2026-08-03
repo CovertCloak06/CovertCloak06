@@ -52,7 +52,7 @@ export default async function AdminLayout({
     <div className="flex min-h-screen bg-charcoal-50">
       <aside className="hidden w-56 shrink-0 flex-col border-r border-charcoal-800 bg-charcoal-900 text-paper md:flex">
         <div className="border-b border-charcoal-800 p-4">
-          <p className="font-semibold">Justice for Kevin</p>
+          <p className="font-semibold">Unbroken: The Fight for Kevin</p>
           <p className="text-xs text-charcoal-400">Campaign dashboard</p>
         </div>
         <nav aria-label="Admin" className="flex-1 overflow-y-auto p-2">

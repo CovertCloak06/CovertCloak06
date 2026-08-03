@@ -59,7 +59,7 @@ from public.cases where is_primary;
 
 -- Default site settings
 insert into public.site_settings (key, value, public) values
-  ('site_title', 'Justice for Kevin', true),
+  ('site_title', 'Unbroken: The Fight for Kevin', true),
   ('site_domain', '', true),
   ('secure_intake_enabled', 'false', true),
   ('attachment_limit_bytes', '104857600', false),

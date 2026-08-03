@@ -30,7 +30,7 @@ export async function sendEmail(options: {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        from: `Justice for Kevin <notifications@${new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://example.org").hostname}>`,
+        from: `Unbroken: The Fight for Kevin <notifications@${new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://example.org").hostname}>`,
         to: [options.to],
         subject: options.subject,
         text: options.text,

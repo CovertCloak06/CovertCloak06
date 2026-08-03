@@ -5,8 +5,8 @@ import { getLocale } from "@/lib/i18n/server";
 
 export const metadata: Metadata = {
   title: {
-    default: "Justice for Kevin — Community Information Hub",
-    template: "%s — Justice for Kevin",
+    default: "Unbroken: The Fight for Kevin — Community Information Hub",
+    template: "%s — Unbroken: The Fight for Kevin",
   },
   description:
     "Community Information Hub for the Kevin Vandenbos Homicide Investigation. Help Antioch Police identify a potential witness. Case 24-6070.",
