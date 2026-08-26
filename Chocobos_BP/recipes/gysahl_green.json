@@ -1,0 +1,17 @@
+{
+  "format_version": "1.20.0",
+  "minecraft:recipe_shaped": {
+    "description": { "identifier": "cb:gysahl_green" },
+    "tags": ["crafting_table"],
+    "pattern": [
+      " W ",
+      "WCW",
+      " W "
+    ],
+    "key": {
+      "W": { "item": "minecraft:wheat" },
+      "C": { "item": "minecraft:carrot" }
+    },
+    "result": { "item": "cb:gysahl_green", "count": 2 }
+  }
+}

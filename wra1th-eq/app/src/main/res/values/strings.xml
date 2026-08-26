@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Wra1th EQ</string>
+    <string name="nav_equalizer">Equalizer</string>
+    <string name="nav_presets">Presets</string>
+    <string name="nav_diagnostics">Diagnostics</string>
+    <string name="nav_settings">Settings</string>
+    <string name="master_enable">Master enable</string>
+    <string name="reset_curve">Reset</string>
+    <string name="save_preset">Save preset</string>
+    <string name="media_volume">Media volume</string>
+    <string name="bass_boost">Bass boost</string>
+    <string name="loudness">Loudness</string>
+    <string name="preamp">Preamp</string>
+    <string name="auto_headroom">Auto headroom</string>
+</resources>
