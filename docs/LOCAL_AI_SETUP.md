@@ -173,15 +173,29 @@ sudo systemctl enable --now ssh   # OpenSSH server, if not already running
    ```
 That's OpenCode running on the home box's GPU, driven from your phone anywhere.
 
-**Optional — chat-style browser use (Open WebUI):** run it on the home box
-bound to localhost and reach it over Tailscale:
+**Optional — chat-style browser use (Open WebUI):** run it on the home box and
+reach it from the phone with an **SSH port-forward** (no extra port exposed).
+On a native Linux Docker host, use `--network host` so the container can reach
+Ollama on the host's loopback — this keeps Ollama bound to `127.0.0.1` (no
+widening) while giving the container a working route to it. (`host.docker.internal`
+is **not** auto-created on Linux, and a loopback-bound Ollama is not reachable
+from the default bridge network, so don't rely on either.)
 ```bash
-docker run -d --name open-webui -p 127.0.0.1:3000:8080 \
-  -e OLLAMA_BASE_URL=http://host.docker.internal:11434 \
+# On the home box:
+docker run -d --name open-webui --network host \
+  -e OLLAMA_BASE_URL=http://localhost:11434 \
+  -e PORT=8080 \
   -v open-webui:/app/backend/data --restart unless-stopped \
   ghcr.io/open-webui/open-webui:main
-# phone browser → http://<home-box-tailscale-name>:3000  (only via Tailscale)
+
+# From the phone (Termux), forward it over your existing SSH session:
+#   ssh -L 3000:localhost:8080 youruser@<home-box-tailscale-name>
+# then open http://localhost:3000 in the phone browser.
 ```
+> With `--network host` the WebUI listens on the host's port 8080, reachable to
+> other devices on your tailnet. The SSH-forward above means you don't need it
+> exposed at all; if you want it strictly loopback, add a host-firewall rule for
+> port 8080 or use `tailscale serve` instead of the forward.
 
 **Offline fallback on the phone:** install **PocketPal AI** and load a small
 GGUF (e.g. a 3–4B coder) for quick questions with no connectivity. This is

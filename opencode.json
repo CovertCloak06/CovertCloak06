@@ -30,7 +30,6 @@
       "cat*": "allow",
       "rg*": "allow",
       "grep*": "allow",
-      "find*": "allow",
       "npm run lint*": "allow",
       "npm run typecheck*": "allow",
       "npm test*": "allow",
