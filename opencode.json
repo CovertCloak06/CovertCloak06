@@ -1,0 +1,45 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "openrouter/qwen/qwen3-coder",
+  "small_model": "openrouter/deepseek/deepseek-chat",
+  "provider": {
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama (local)",
+      "options": {
+        "baseURL": "http://localhost:11434/v1"
+      },
+      "models": {
+        "qwen3-coder:30b": { "name": "Qwen3-Coder 30B (local, Q4_K_M)" },
+        "qwen3-coder:14b": { "name": "Qwen3-Coder 14B (local)" },
+        "qwen3-coder:7b": { "name": "Qwen3-Coder 7B (local, fast)" }
+      }
+    }
+  },
+  "permission": {
+    "edit": "allow",
+    "webfetch": "ask",
+    "bash": {
+      "*": "ask",
+      "git status": "allow",
+      "git diff*": "allow",
+      "git log*": "allow",
+      "git branch*": "allow",
+      "git show*": "allow",
+      "ls*": "allow",
+      "cat*": "allow",
+      "rg*": "allow",
+      "grep*": "allow",
+      "find*": "allow",
+      "npm run lint*": "allow",
+      "npm run typecheck*": "allow",
+      "npm test*": "allow",
+      "npm run test*": "allow",
+      "npm run build*": "allow",
+      "rm*": "ask",
+      "git push*": "ask",
+      "git reset*": "ask",
+      "supabase db reset*": "ask"
+    }
+  }
+}
