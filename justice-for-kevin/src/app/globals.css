@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+/*
+ * Design language: restrained, credible, editorial.
+ * Dark charcoal / off-white / muted steel blue; red reserved for urgent
+ * actions and warnings only. No gradients, glow, or true-crime styling.
+ */
+
+@theme {
+  --color-charcoal-950: #14161a;
+  --color-charcoal-900: #1a1d21;
+  --color-charcoal-800: #23272d;
+  --color-charcoal-700: #2f353d;
+  --color-charcoal-600: #454d57;
+  --color-charcoal-500: #5d6672;
+  --color-charcoal-400: #838d9a;
+  --color-charcoal-300: #aab3bf;
+  --color-charcoal-200: #ced5dd;
+  --color-charcoal-100: #e7eaee;
+  --color-charcoal-50: #f4f5f7;
+
+  --color-paper: #faf9f6;
+
+  --color-steel-700: #33526b;
+  --color-steel-600: #3f6484;
+  --color-steel-500: #4f7899;
+  --color-steel-400: #7397b3;
+  --color-steel-200: #c3d3e0;
+  --color-steel-100: #e2eaf1;
+
+  --color-urgent-700: #a52a2a;
+  --color-urgent-600: #b93838;
+  --color-urgent-100: #f7e4e4;
+
+  --font-sans: "Inter", "Inter Variable", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-serif: "Source Serif 4", "Source Serif Pro", Georgia, Cambria,
+    "Times New Roman", serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-charcoal-900);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Visible focus states everywhere (WCAG 2.4.7 / 2.4.13) */
+:focus-visible {
+  outline: 3px solid var(--color-steel-600);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+::selection {
+  background-color: var(--color-steel-200);
+}
+
+.prose-serif {
+  font-family: var(--font-serif);
+  line-height: 1.7;
+}
+
+/* Skip link — visually hidden until focused */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  background: var(--color-charcoal-900);
+  color: var(--color-paper);
+  padding: 0.75rem 1.25rem;
+  border-radius: 0 0 0.5rem 0;
+}
+.skip-link:focus {
+  left: 0;
+}
