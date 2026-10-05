@@ -61,6 +61,7 @@ const MEDIA_EVENTS = [
   'canplay',
   'loadedmetadata',
   'emptied',
+  'error',
 ] as const;
 
 /** Seek events within this distance of the expected target count as ours. */
@@ -269,6 +270,17 @@ export class PlayerController {
       case 'emptied':
         this.scheduleRescan();
         return;
+      case 'error': {
+        // MEDIA_ERR_DECODE (3) / SRC_NOT_SUPPORTED (4) inside a WebView usually
+        // means the DRM pipeline refused playback: the host offers the native app.
+        const code = video.error?.code ?? 0;
+        this.send({
+          type: 'PLAYER_ERROR',
+          code: 'PLAYBACK_FAILED',
+          message: `media error ${code}${video.error?.message ? `: ${video.error.message.slice(0, 200)}` : ''}`,
+        });
+        return;
+      }
       default:
         return;
     }

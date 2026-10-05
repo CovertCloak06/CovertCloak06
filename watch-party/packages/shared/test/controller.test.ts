@@ -178,6 +178,19 @@ describe('autoplay policy', () => {
   });
 });
 
+describe('media errors', () => {
+  it('reports playback failures so the host can offer the native app', async () => {
+    const { video } = setup();
+    Object.defineProperty(video, 'error', { get: () => ({ code: 4, message: 'DRM not supported' }) });
+    video.dispatchEvent(new Event('error'));
+    expect(events).toContainEqual({
+      type: 'PLAYER_ERROR',
+      code: 'PLAYBACK_FAILED',
+      message: 'media error 4: DRM not supported',
+    });
+  });
+});
+
 describe('netflix adapter', () => {
   it('seeks through the player API instead of writing currentTime', async () => {
     const seekMs = vi.fn(() => true);

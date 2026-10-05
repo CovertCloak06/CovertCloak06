@@ -21,5 +21,8 @@
     "format:check": "prettier --check .",
     "dev:server": "npm run build -w @watch-party/shared && npm run dev -w @watch-party/server",
     "test:e2e": "npm run test:e2e -w @watch-party/server"
+  },
+  "overrides": {
+    "react": "19.2.3"
   }
 }

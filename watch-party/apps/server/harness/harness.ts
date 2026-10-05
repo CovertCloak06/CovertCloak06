@@ -10,7 +10,7 @@
  * Open two tabs on /dev/?room=CODE to watch them stay in sync. Playwright's
  * e2e suite drives this page.
  */
-import { RoomSyncClient, parsePlayerEvent, wrapPlayerMessage, type PlayerCommand } from '@watch-party/shared';
+import { RoomSyncClient, parsePlayerEvent, wrapPlayerMessage, type PlayerCommand } from '@watch-party/shared/client';
 import { io } from 'socket.io-client';
 
 declare global {

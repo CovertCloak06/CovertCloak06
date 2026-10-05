@@ -5,12 +5,15 @@
  * Socket.io event named `event` carrying `payload`. Request-style events use
  * Socket.io acknowledgements and answer with an {@link Ack}.
  *
+ * This module is dependency-free (no zod) so clients can import it without
+ * pulling a validation library into their bundles; the matching runtime
+ * schemas live in protocol-schemas.ts and are used by the server.
+ *
  * Identity is never taken from a payload: the server derives the user id from
  * the session token presented in the Socket.io handshake, and overwrites
  * `senderId` on everything it relays. That stops one member spoofing another
  * (or the host) by editing a JSON field.
  */
-import { z } from 'zod';
 import type { WatchOption } from './catalog.js';
 
 export const PROTOCOL_VERSION = 1;
@@ -64,27 +67,26 @@ export interface ProtocolError {
 export type Ack<T> = { ok: true; data: T } | { ok: false; error: ProtocolError };
 
 // ---------------------------------------------------------------------------
-// Field schemas
+// Client -> server payloads (validated server-side by protocol-schemas.ts)
 // ---------------------------------------------------------------------------
 
-export const roomIdSchema = z
-  .string()
-  .trim()
-  .regex(/^[A-Za-z0-9-]{4,32}$/, 'Invalid room id')
-  .transform((s) => s.toUpperCase());
-
-export const timecodeSchema = z.number().min(0).max(MAX_TIMECODE_SECONDS);
-/** Epoch milliseconds expressed in the server's clock. */
-export const timestampSchema = z.number().int().positive();
-export const playbackRateSchema = z.number().min(0.25).max(4);
-export const syncActionTypeSchema = z.enum(['PLAY', 'PAUSE', 'SEEK']);
-export type SyncActionType = z.infer<typeof syncActionTypeSchema>;
+export type SyncActionType = 'PLAY' | 'PAUSE' | 'SEEK';
 
 /**
  * What a member's player is doing. `fallback` means the member is watching in
  * the native app (deep link) and syncing manually from the countdown.
  */
-export const memberStatusSchema = z.enum([
+export type MemberStatus =
+  | 'idle'
+  | 'loading'
+  | 'ready'
+  | 'playing'
+  | 'paused'
+  | 'buffering'
+  | 'blocked'
+  | 'fallback';
+
+export const MEMBER_STATUSES: readonly MemberStatus[] = [
   'idle',
   'loading',
   'ready',
@@ -93,83 +95,73 @@ export const memberStatusSchema = z.enum([
   'buffering',
   'blocked',
   'fallback',
-]);
-export type MemberStatus = z.infer<typeof memberStatusSchema>;
+];
 
-// ---------------------------------------------------------------------------
-// Client -> server payloads
-// ---------------------------------------------------------------------------
-
-export const joinRoomPayloadSchema = z.object({
-  roomId: roomIdSchema,
+export interface JoinRoomPayload {
+  roomId: string;
   /** Accepted for spec compatibility; must match the authenticated user if sent. */
-  userId: z.string().optional(),
+  userId?: string;
   /** Free-form country; normalised (UK -> GB) and validated server-side. */
-  country: z.string().min(2).max(3),
-  services: z.array(z.string().min(1).max(32)).min(1).max(20),
-  displayName: z.string().trim().min(1).max(40).optional(),
-});
-export type JoinRoomPayload = z.input<typeof joinRoomPayloadSchema>;
+  country: string;
+  services: string[];
+  displayName?: string;
+}
 
-export const leaveRoomPayloadSchema = z.object({ roomId: roomIdSchema });
-export type LeaveRoomPayload = z.input<typeof leaveRoomPayloadSchema>;
+export interface LeaveRoomPayload {
+  roomId: string;
+}
 
-export const syncActionPayloadSchema = z.object({
-  roomId: roomIdSchema,
+export interface SyncActionPayload {
+  roomId: string;
   /** Ignored: the server stamps the authenticated sender. */
-  senderId: z.string().optional(),
-  action: syncActionTypeSchema,
-  timecode: timecodeSchema,
+  senderId?: string;
+  action: SyncActionType;
+  timecode: number;
   /** When the action happened, in server-clock epoch ms (client clock + offset). */
-  timestamp: timestampSchema,
-});
-export type SyncActionPayload = z.input<typeof syncActionPayloadSchema>;
+  timestamp: number;
+}
 
-export const hostHeartbeatPayloadSchema = z.object({
-  roomId: roomIdSchema,
-  timecode: timecodeSchema,
-  paused: z.boolean(),
-  playbackRate: playbackRateSchema.default(1),
-  timestamp: timestampSchema,
-});
-export type HostHeartbeatPayload = z.input<typeof hostHeartbeatPayloadSchema>;
+export interface HostHeartbeatPayload {
+  roomId: string;
+  timecode: number;
+  paused: boolean;
+  playbackRate?: number;
+  timestamp: number;
+}
 
-export const memberStatusPayloadSchema = z.object({
-  roomId: roomIdSchema,
-  status: memberStatusSchema,
-  timecode: timecodeSchema.nullable().default(null),
-});
-export type MemberStatusPayload = z.input<typeof memberStatusPayloadSchema>;
+export interface MemberStatusPayload {
+  roomId: string;
+  status: MemberStatus;
+  timecode?: number | null;
+}
 
-export const selectTitlePayloadSchema = z.object({
-  roomId: roomIdSchema,
-  tmdbId: z.number().int().positive(),
-});
-export type SelectTitlePayload = z.input<typeof selectTitlePayloadSchema>;
+export interface SelectTitlePayload {
+  roomId: string;
+  tmdbId: number;
+}
 
-export const scheduleStartPayloadSchema = z.object({
-  roomId: roomIdSchema,
+export interface ScheduleStartPayload {
+  roomId: string;
   /** Where everyone should be in the film when playback starts. */
-  timecode: timecodeSchema,
-  /** Countdown length. */
-  delayMs: z.number().int().min(3_000).max(30_000).default(5_000),
-});
-export type ScheduleStartPayload = z.input<typeof scheduleStartPayloadSchema>;
+  timecode: number;
+  /** Countdown length (3-30s, default 5s). */
+  delayMs?: number;
+}
 
-export const transferHostPayloadSchema = z.object({
-  roomId: roomIdSchema,
-  userId: z.string().min(1),
-});
-export type TransferHostPayload = z.input<typeof transferHostPayloadSchema>;
+export interface TransferHostPayload {
+  roomId: string;
+  userId: string;
+}
 
-export const updateSettingsPayloadSchema = z.object({
-  roomId: roomIdSchema,
-  hostOnlyControl: z.boolean(),
-});
-export type UpdateSettingsPayload = z.input<typeof updateSettingsPayloadSchema>;
+export interface UpdateSettingsPayload {
+  roomId: string;
+  hostOnlyControl: boolean;
+}
 
-export const timePingPayloadSchema = z.object({ t0: z.number() });
-export type TimePingPayload = z.input<typeof timePingPayloadSchema>;
+export interface TimePingPayload {
+  t0: number;
+}
+
 export interface TimePong {
   t0: number;
   serverTime: number;

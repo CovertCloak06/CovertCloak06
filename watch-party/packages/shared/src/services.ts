@@ -35,6 +35,12 @@ export interface ServiceDefinition {
   tmdbNames: readonly string[];
   /** Hostnames (and their subdomains) that belong to the service's web player. */
   domains: readonly string[];
+  /**
+   * Extra hostnames the service's own sign-in flow navigates through (e.g.
+   * Apple ID). Allowed for top-level navigation in the WebView, but the
+   * player controller is never relevant there.
+   */
+  authDomains?: readonly string[];
   homeUrl: string;
   /** Where to send a user to find a title when the catalog has no direct link. */
   searchUrl: (title: string) => string;
@@ -119,6 +125,7 @@ export const SERVICES: readonly ServiceDefinition[] = [
     tmdbProviderIds: [350],
     tmdbNames: ['apple tv plus', 'apple tv+'],
     domains: ['tv.apple.com'],
+    authDomains: ['apple.com'],
     homeUrl: 'https://tv.apple.com',
     searchUrl: (t) => `https://tv.apple.com/search?term=${q(t)}`,
     adapter: 'generic',
