@@ -3,7 +3,11 @@ import { io as connect, type Socket } from 'socket.io-client';
 import { createApp, type App, type AppOverrides } from '../src/app.js';
 import { loadConfig } from '../src/config.js';
 import { createLogger } from '../src/logger.js';
-import type { CatalogProvider, ProviderCatalog, ProviderTitle } from '../src/catalog/providers/types.js';
+import type {
+  CatalogProvider,
+  ProviderCatalog,
+  ProviderTitle,
+} from '../src/catalog/providers/types.js';
 
 export const silentLogger = createLogger('silent');
 
@@ -24,7 +28,10 @@ export interface RunningApp {
   close(): Promise<void>;
 }
 
-export async function startApp(overrides: AppOverrides = {}, env: Record<string, string> = {}): Promise<RunningApp> {
+export async function startApp(
+  overrides: AppOverrides = {},
+  env: Record<string, string> = {},
+): Promise<RunningApp> {
   const app = createApp(testConfig(env), silentLogger, overrides);
   const port = await app.listen(0, '127.0.0.1');
   return { app, url: `http://127.0.0.1:${port}`, close: () => app.close() };
@@ -36,12 +43,20 @@ export async function newSession(url: string): Promise<{ userId: string; token: 
 }
 
 export async function createRoom(url: string, token: string): Promise<string> {
-  const res = await fetch(`${url}/api/rooms`, { method: 'POST', headers: { authorization: `Bearer ${token}` } });
+  const res = await fetch(`${url}/api/rooms`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${token}` },
+  });
   return ((await res.json()) as { roomId: string }).roomId;
 }
 
 export async function connectSocket(url: string, token: string | undefined): Promise<Socket> {
-  const socket = connect(url, { auth: token ? { token } : {}, transports: ['websocket'], reconnection: false, forceNew: true });
+  const socket = connect(url, {
+    auth: token ? { token } : {},
+    transports: ['websocket'],
+    reconnection: false,
+    forceNew: true,
+  });
   await new Promise<void>((resolve, reject) => {
     socket.once('connect', () => resolve());
     socket.once('connect_error', (err) => reject(err));
@@ -50,7 +65,12 @@ export async function connectSocket(url: string, token: string | undefined): Pro
 }
 
 /** Resolves with the next payload of `event` on `socket`. */
-export function nextEvent<T>(socket: Socket, event: string, timeoutMs = 3_000, filter: (p: T) => boolean = () => true): Promise<T> {
+export function nextEvent<T>(
+  socket: Socket,
+  event: string,
+  timeoutMs = 3_000,
+  filter: (p: T) => boolean = () => true,
+): Promise<T> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
       socket.off(event, handler);
@@ -82,7 +102,12 @@ export function emitAck<T>(socket: Socket, event: string, payload: unknown): Pro
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export const title = (tmdbId: number, name: string, popularity: number, link: string | null = null): ProviderTitle => ({
+export const title = (
+  tmdbId: number,
+  name: string,
+  popularity: number,
+  link: string | null = null,
+): ProviderTitle => ({
   tmdbId,
   title: name,
   releaseYear: 2000,

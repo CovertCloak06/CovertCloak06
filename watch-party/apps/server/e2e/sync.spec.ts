@@ -20,10 +20,16 @@ async function openMember(browser: Browser, name: string, room?: string): Promis
   await page.goto(`/dev/?${qs}`);
   await expect(page.locator('body')).toHaveAttribute('data-ready', 'true');
   // Wait until the injected controller has attached to the video.
-  await expect.poll(() => page.evaluate(() => document.getElementById('video') !== null && !!window.__watchParty)).toBe(true);
+  await expect
+    .poll(() =>
+      page.evaluate(() => document.getElementById('video') !== null && !!window.__watchParty),
+    )
+    .toBe(true);
   await page.evaluate(() => {
     const v = document.getElementById('video') as HTMLVideoElement;
-    return v.readyState >= 1 ? null : new Promise((r) => v.addEventListener('loadedmetadata', r, { once: true }));
+    return v.readyState >= 1
+      ? null
+      : new Promise((r) => v.addEventListener('loadedmetadata', r, { once: true }));
   });
   return page;
 }
@@ -38,10 +44,15 @@ const localActions = (page: Page) =>
   page.evaluate(() => window.harness!.log.filter((l) => / local (PLAY|PAUSE|SEEK)/.test(l)).length);
 
 /** User-style actions: go through the element, exactly like the site's own controls. */
-const play = (page: Page) => page.evaluate(() => (document.getElementById('video') as HTMLVideoElement).play());
-const pause = (page: Page) => page.evaluate(() => (document.getElementById('video') as HTMLVideoElement).pause());
+const play = (page: Page) =>
+  page.evaluate(() => (document.getElementById('video') as HTMLVideoElement).play());
+const pause = (page: Page) =>
+  page.evaluate(() => (document.getElementById('video') as HTMLVideoElement).pause());
 const seek = (page: Page, t: number) =>
-  page.evaluate((to) => ((document.getElementById('video') as HTMLVideoElement).currentTime = to), t);
+  page.evaluate(
+    (to) => ((document.getElementById('video') as HTMLVideoElement).currentTime = to),
+    t,
+  );
 
 async function expectInSync(a: Page, b: Page, toleranceS: number) {
   await expect
@@ -55,7 +66,9 @@ async function expectInSync(a: Page, b: Page, toleranceS: number) {
     .toBeLessThan(toleranceS);
 }
 
-test('two members stay in sync through play, pause, seek and control from either side', async ({ browser }) => {
+test('two members stay in sync through play, pause, seek and control from either side', async ({
+  browser,
+}) => {
   const host = await openMember(browser, 'Ana (US)');
   const guest = await openMember(browser, 'Ben (UK)', await roomOf(host));
   await expect(host.locator('#members li')).toHaveCount(2);
@@ -127,7 +140,9 @@ async function maxDriftOver(a: Page, b: Page, ms: number, onSample?: (s: VideoSt
   return max;
 }
 
-test('micro drift is corrected by nudging the playback rate (1.05), without any echo', async ({ browser }) => {
+test('micro drift is corrected by nudging the playback rate (1.05), without any echo', async ({
+  browser,
+}) => {
   const host = await openMember(browser, 'Host');
   const guest = await openMember(browser, 'Guest', await roomOf(host));
   await play(host);
@@ -139,14 +154,18 @@ test('micro drift is corrected by nudging the playback rate (1.05), without any 
   await makeClockSlow(guest, 0.97);
   const rates = new Set<number>();
   await maxDriftOver(host, guest, 8_000, (s) => rates.add(Math.round(s.rate * 100) / 100));
-  const steadyMax = await maxDriftOver(host, guest, 10_000, (s) => rates.add(Math.round(s.rate * 100) / 100));
+  const steadyMax = await maxDriftOver(host, guest, 10_000, (s) =>
+    rates.add(Math.round(s.rate * 100) / 100),
+  );
   expect(rates.has(1.05)).toBe(true);
   expect(steadyMax).toBeLessThan(0.5);
   expect(await localActions(guest)).toBe(0);
   expect(await localActions(host)).toBe(1);
 });
 
-test('drift a rate nudge cannot fix is hard-seeked past the 1s threshold, without any echo', async ({ browser }) => {
+test('drift a rate nudge cannot fix is hard-seeked past the 1s threshold, without any echo', async ({
+  browser,
+}) => {
   const host = await openMember(browser, 'Host');
   const guest = await openMember(browser, 'Guest', await roomOf(host));
   await play(host);
@@ -190,7 +209,9 @@ test('host hand-off keeps the heartbeat source alive', async ({ browser }) => {
   await expect(host.locator('#role')).toHaveText('guest');
   await play(guest);
   await expect.poll(async () => (await state(host)).paused).toBe(false);
-  await host.evaluate(() => ((document.getElementById('video') as HTMLVideoElement).playbackRate = 0.8));
+  await host.evaluate(
+    () => ((document.getElementById('video') as HTMLVideoElement).playbackRate = 0.8),
+  );
   await host.waitForTimeout(5_000);
   await expectInSync(host, guest, 0.6);
 });

@@ -3,7 +3,14 @@
  * driven by the extension with a dev-harness member (which stands in for the
  * mobile app: same injected controller and room client).
  */
-import { chromium, expect, test, type BrowserContext, type Page, type Worker } from '@playwright/test';
+import {
+  chromium,
+  expect,
+  test,
+  type BrowserContext,
+  type Page,
+  type Worker,
+} from '@playwright/test';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -16,7 +23,12 @@ test.beforeAll(async () => {
   context = await chromium.launchPersistentContext('', {
     channel: 'chromium', // new headless mode, which supports extensions
     headless: true,
-    args: [`--disable-extensions-except=${EXTENSION}`, `--load-extension=${EXTENSION}`, '--autoplay-policy=no-user-gesture-required', '--mute-audio'],
+    args: [
+      `--disable-extensions-except=${EXTENSION}`,
+      `--load-extension=${EXTENSION}`,
+      '--autoplay-policy=no-user-gesture-required',
+      '--mute-audio',
+    ],
   });
   worker = context.serviceWorkers()[0] ?? (await context.waitForEvent('serviceworker'));
 });
@@ -34,7 +46,9 @@ const video = (page: Page) =>
 async function waitForMetadata(page: Page) {
   await page.evaluate(() => {
     const v = document.querySelector('video')!;
-    return v.readyState >= 1 ? null : new Promise((r) => v.addEventListener('loadedmetadata', r, { once: true }));
+    return v.readyState >= 1
+      ? null
+      : new Promise((r) => v.addEventListener('loadedmetadata', r, { once: true }));
   });
 }
 
@@ -58,7 +72,10 @@ test('the extension syncs a tab with a harness member in both directions', async
   }, extPage.url());
 
   const created = await worker.evaluate(
-    (id) => (globalThis as unknown as { watchParty: { handle(r: unknown): Promise<{ roomId: string }> } }).watchParty.handle({ type: 'createRoom', tabId: id }),
+    (id) =>
+      (
+        globalThis as unknown as { watchParty: { handle(r: unknown): Promise<{ roomId: string }> } }
+      ).watchParty.handle({ type: 'createRoom', tabId: id }),
     tabId,
   );
   expect(created.roomId).toMatch(/^[A-Z2-9]{6}$/);

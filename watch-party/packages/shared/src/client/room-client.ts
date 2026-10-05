@@ -290,7 +290,8 @@ export class RoomSyncClient extends Emitter<RoomClientEvents> {
     });
     // Optimistic local update so heartbeats and catch-up use the new state at once.
     state.playback = {
-      paused: event.action === 'PAUSE' ? true : event.action === 'PLAY' ? false : state.playback.paused,
+      paused:
+        event.action === 'PAUSE' ? true : event.action === 'PLAY' ? false : state.playback.paused,
       timecode: event.timecode,
       timestamp,
       playbackRate: state.playback.playbackRate,
@@ -363,7 +364,12 @@ export class RoomSyncClient extends Emitter<RoomClientEvents> {
     if (action.roomId !== this.roomId || action.senderId === this.userId) return;
     if (this.roomState) {
       this.roomState.playback = {
-        paused: action.action === 'PAUSE' ? true : action.action === 'PLAY' ? false : this.roomState.playback.paused,
+        paused:
+          action.action === 'PAUSE'
+            ? true
+            : action.action === 'PLAY'
+              ? false
+              : this.roomState.playback.paused,
         timecode: action.timecode,
         timestamp: action.timestamp,
         playbackRate: this.roomState.playback.playbackRate,
@@ -400,10 +406,7 @@ export class RoomSyncClient extends Emitter<RoomClientEvents> {
     });
     const status = this.lastStatus;
     if (status) {
-      const hostNow = projectTimecode(
-        { ...s.playback, timestamp: asOf },
-        status.at,
-      );
+      const hostNow = projectTimecode({ ...s.playback, timestamp: asOf }, status.at);
       this.emit('drift', status.timecode - hostNow);
     }
   };
@@ -420,7 +423,12 @@ export class RoomSyncClient extends Emitter<RoomClientEvents> {
       () => {
         this.startTimer = null;
         if (this.player === player) {
-          player.send({ type: 'APPLY', action: 'PLAY', timecode: start.timecode, asOf: startAtLocal });
+          player.send({
+            type: 'APPLY',
+            action: 'PLAY',
+            timecode: start.timecode,
+            asOf: startAtLocal,
+          });
         }
       },
       Math.max(0, startAtLocal - this.now()),

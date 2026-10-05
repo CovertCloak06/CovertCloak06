@@ -35,15 +35,22 @@ describe('loadConfig', () => {
     expect(loadConfig({ NODE_ENV: 'test' }).catalog.provider).toBe('fixture');
     expect(loadConfig({ NODE_ENV: 'test', TMDB_READ_TOKEN: 't' }).catalog.provider).toBe('tmdb');
     expect(
-      loadConfig({ NODE_ENV: 'test', TMDB_READ_TOKEN: 't', STREAMING_AVAILABILITY_API_KEY: 'k' }).catalog.provider,
+      loadConfig({ NODE_ENV: 'test', TMDB_READ_TOKEN: 't', STREAMING_AVAILABILITY_API_KEY: 'k' })
+        .catalog.provider,
     ).toBe('streaming-availability');
   });
 
   it('refuses unsafe production setups', () => {
     expect(() => loadConfig({ NODE_ENV: 'production', TMDB_READ_TOKEN: 't' })).toThrow(ConfigError);
-    expect(() => loadConfig({ NODE_ENV: 'production', SESSION_SECRET: 'x'.repeat(40) })).toThrow(/catalog API/);
+    expect(() => loadConfig({ NODE_ENV: 'production', SESSION_SECRET: 'x'.repeat(40) })).toThrow(
+      /catalog API/,
+    );
     expect(
-      loadConfig({ NODE_ENV: 'production', SESSION_SECRET: 'x'.repeat(40), ALLOW_FIXTURE_CATALOG: '1' }).catalog.provider,
+      loadConfig({
+        NODE_ENV: 'production',
+        SESSION_SECRET: 'x'.repeat(40),
+        ALLOW_FIXTURE_CATALOG: '1',
+      }).catalog.provider,
     ).toBe('fixture');
   });
 

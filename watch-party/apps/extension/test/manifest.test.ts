@@ -5,10 +5,11 @@ import { buildManifest, serviceMatchPatterns } from '../src/manifest.js';
 describe('manifest', () => {
   it('matches exactly the registered services over https', () => {
     const patterns = serviceMatchPatterns();
-    for (const s of SERVICES) for (const d of s.domains) {
-      expect(patterns).toContain(`https://${d}/*`);
-      expect(patterns).toContain(`https://*.${d}/*`);
-    }
+    for (const s of SERVICES)
+      for (const d of s.domains) {
+        expect(patterns).toContain(`https://${d}/*`);
+        expect(patterns).toContain(`https://*.${d}/*`);
+      }
     expect(patterns.every((p) => p.startsWith('https://'))).toBe(true);
   });
 

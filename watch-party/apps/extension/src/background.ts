@@ -41,7 +41,9 @@ const DEFAULT_SERVER = 'http://localhost:8080';
 
 async function getServerUrl(): Promise<string> {
   const { serverUrl } = await chrome.storage.local.get('serverUrl');
-  return typeof serverUrl === 'string' && serverUrl ? serverUrl.replace(/\/+$/, '') : DEFAULT_SERVER;
+  return typeof serverUrl === 'string' && serverUrl
+    ? serverUrl.replace(/\/+$/, '')
+    : DEFAULT_SERVER;
 }
 
 async function getProfile(): Promise<Profile | null> {
@@ -114,7 +116,10 @@ function adapterForTab(tabId: number): Promise<'generic' | 'netflix'> {
 async function attachPlayer(session: TabSession): Promise<void> {
   const port = playerPorts.get(session.tabId);
   if (!port) return;
-  port.postMessage({ type: 'activate', adapter: await adapterForTab(session.tabId) } satisfies BackgroundToContent);
+  port.postMessage({
+    type: 'activate',
+    adapter: await adapterForTab(session.tabId),
+  } satisfies BackgroundToContent);
   session.client.attachPlayer({
     send: (command) => port.postMessage({ type: 'command', command } satisfies BackgroundToContent),
   });
@@ -126,7 +131,11 @@ async function startRoom(tabId: number, roomId: string): Promise<TabSession> {
     if (existing.roomId === roomId) return existing;
     endRoom(tabId, true);
   }
-  const [profile, session, server] = await Promise.all([getProfile(), getSession(), getServerUrl()]);
+  const [profile, session, server] = await Promise.all([
+    getProfile(),
+    getSession(),
+    getServerUrl(),
+  ]);
   if (!profile) throw new Error('Set up your profile first');
 
   const socket = io(server, { auth: { token: session.token }, transports: ['websocket'] });
@@ -134,7 +143,11 @@ async function startRoom(tabId: number, roomId: string): Promise<TabSession> {
     socket,
     roomId,
     userId: session.userId,
-    profile: { country: profile.country, services: profile.services, displayName: profile.displayName },
+    profile: {
+      country: profile.country,
+      services: profile.services,
+      displayName: profile.displayName,
+    },
   });
   const tab: TabSession = {
     tabId,
@@ -168,7 +181,10 @@ async function startRoom(tabId: number, roomId: string): Promise<TabSession> {
   });
 
   await new Promise<void>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error('Could not reach the watch party server')), 10_000);
+    const timer = setTimeout(
+      () => reject(new Error('Could not reach the watch party server')),
+      10_000,
+    );
     socket.once('connect', () => {
       clearTimeout(timer);
       resolve();
@@ -271,13 +287,22 @@ async function tabInfo(tabId: number | null): Promise<TabInfo | null> {
   const tab = await chrome.tabs.get(tabId).catch(() => null);
   if (!tab) return null;
   const service = tab.url ? serviceForUrl(tab.url) : undefined;
-  return { id: tabId, url: tab.url ?? null, serviceId: service?.id ?? null, serviceName: service?.name ?? null };
+  return {
+    id: tabId,
+    url: tab.url ?? null,
+    serviceId: service?.id ?? null,
+    serviceName: service?.name ?? null,
+  };
 }
 
 let attribution: string | null = null;
 
 async function status(tabId: number | null): Promise<PopupStatus> {
-  const [profile, serverUrl, tab] = await Promise.all([getProfile(), getServerUrl(), tabInfo(tabId)]);
+  const [profile, serverUrl, tab] = await Promise.all([
+    getProfile(),
+    getServerUrl(),
+    tabInfo(tabId),
+  ]);
   if (attribution === null) {
     attribution = await fetch(`${serverUrl}/api/meta`)
       .then((r) => r.json() as Promise<{ attribution: string }>)
@@ -324,7 +349,11 @@ async function handle(req: PopupRequest): Promise<unknown> {
       return null;
     case 'saveServer': {
       const url = new URL(req.url); // throws on garbage
-      if (url.protocol !== 'https:' && url.hostname !== 'localhost' && url.hostname !== '127.0.0.1') {
+      if (
+        url.protocol !== 'https:' &&
+        url.hostname !== 'localhost' &&
+        url.hostname !== '127.0.0.1'
+      ) {
         throw new Error('Use https:// for remote servers');
       }
       await chrome.storage.local.set({ serverUrl: url.origin });
@@ -333,7 +362,10 @@ async function handle(req: PopupRequest): Promise<unknown> {
     }
     case 'createRoom': {
       const session = await getSession();
-      const { roomId } = await api<{ roomId: string }>('/api/rooms', { method: 'POST', token: session.token });
+      const { roomId } = await api<{ roomId: string }>('/api/rooms', {
+        method: 'POST',
+        token: session.token,
+      });
       await startRoom(req.tabId, roomId);
       return { roomId };
     }
@@ -367,16 +399,21 @@ async function handle(req: PopupRequest): Promise<unknown> {
   }
 }
 
-chrome.runtime.onMessage.addListener((req: PopupRequest, sender, sendResponse: (r: PopupResponse) => void) => {
-  // Only our own extension pages (the popup, even when opened in a tab) may
-  // drive the background. Content scripts run on streaming sites' URLs and
-  // talk over the "player" port instead.
-  if (sender.id !== chrome.runtime.id || !sender.url?.startsWith(chrome.runtime.getURL(''))) return false;
-  handle(req)
-    .then((data) => sendResponse({ ok: true, data }))
-    .catch((err: unknown) => sendResponse({ ok: false, error: err instanceof Error ? err.message : String(err) }));
-  return true; // async response
-});
+chrome.runtime.onMessage.addListener(
+  (req: PopupRequest, sender, sendResponse: (r: PopupResponse) => void) => {
+    // Only our own extension pages (the popup, even when opened in a tab) may
+    // drive the background. Content scripts run on streaming sites' URLs and
+    // talk over the "player" port instead.
+    if (sender.id !== chrome.runtime.id || !sender.url?.startsWith(chrome.runtime.getURL('')))
+      return false;
+    handle(req)
+      .then((data) => sendResponse({ ok: true, data }))
+      .catch((err: unknown) =>
+        sendResponse({ ok: false, error: err instanceof Error ? err.message : String(err) }),
+      );
+    return true; // async response
+  },
+);
 
 // Test hook for the extension e2e suite (dev builds only).
 declare const __DEV__: boolean;

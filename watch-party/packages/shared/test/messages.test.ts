@@ -12,7 +12,9 @@ describe('player messages', () => {
   it('rejects wrong nonces, bad shapes and oversized payloads', () => {
     const msg = { type: 'PLAYER_EVENT', action: 'PAUSE', timecode: 12.5, at: 1 };
     expect(parsePlayerEvent(JSON.stringify(wrapPlayerMessage('other', msg)), nonce)).toBeNull();
-    expect(parsePlayerEvent(wrapPlayerMessage(nonce, { ...msg, action: 'EXPLODE' }), nonce)).toBeNull();
+    expect(
+      parsePlayerEvent(wrapPlayerMessage(nonce, { ...msg, action: 'EXPLODE' }), nonce),
+    ).toBeNull();
     expect(parsePlayerEvent(wrapPlayerMessage(nonce, { ...msg, timecode: -1 }), nonce)).toBeNull();
     expect(parsePlayerEvent('x'.repeat(20_000), nonce)).toBeNull();
     expect(parsePlayerEvent('{not json', nonce)).toBeNull();

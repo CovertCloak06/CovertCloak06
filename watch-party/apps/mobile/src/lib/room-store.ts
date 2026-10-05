@@ -57,20 +57,31 @@ export class RoomStore {
       socket: this.socket,
       roomId,
       userId: session.userId,
-      profile: { country: profile.country, services: profile.services, displayName: profile.displayName },
+      profile: {
+        country: profile.country,
+        services: profile.services,
+        displayName: profile.displayName,
+      },
     });
 
     this.client.on('state', (state) => this.set({ state }));
     this.client.on('drift', (drift) => this.set({ drift }));
     this.client.on('error', (error) => this.set({ error }));
     this.client.on('scheduled', (scheduled) => this.set({ scheduled }));
-    this.client.on('remoteAction', (lastRemoteAction) => this.set({ lastRemoteAction, autoplayBlocked: false }));
+    this.client.on('remoteAction', (lastRemoteAction) =>
+      this.set({ lastRemoteAction, autoplayBlocked: false }),
+    );
     this.client.on('autoplayBlocked', () => this.set({ autoplayBlocked: true }));
-    this.client.on('connection', (c) => this.set({ connection: c === 'connected' ? 'connected' : 'reconnecting' }));
+    this.client.on('connection', (c) =>
+      this.set({ connection: c === 'connected' ? 'connected' : 'reconnecting' }),
+    );
     this.socket.on('connect_error', (err) => {
       this.set({
         connection: this.snapshot.joined ? 'reconnecting' : 'failed',
-        error: { code: err.message === 'UNAUTHORIZED' ? 'UNAUTHORIZED' : 'INTERNAL', message: `Connection failed: ${err.message}` },
+        error: {
+          code: err.message === 'UNAUTHORIZED' ? 'UNAUTHORIZED' : 'INTERNAL',
+          message: `Connection failed: ${err.message}`,
+        },
       });
     });
     this.socket.once('connect', () => void this.firstJoin());

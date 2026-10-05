@@ -39,7 +39,10 @@ export interface App {
   close(): Promise<void>;
 }
 
-export function buildProviders(config: AppConfig): { provider: CatalogProvider; metadata: MetadataProvider | null } {
+export function buildProviders(config: AppConfig): {
+  provider: CatalogProvider;
+  metadata: MetadataProvider | null;
+} {
   const tmdb = config.catalog.tmdb
     ? new TmdbClient({ ...config.catalog.tmdb, maxPages: config.catalog.maxPages })
     : null;
@@ -65,7 +68,8 @@ export function createApp(config: AppConfig, logger: Logger, overrides: AppOverr
     overrides.store ?? (config.redisUrl ? RedisStore.connect(config.redisUrl) : new MemoryStore());
   const built = overrides.provider ? null : buildProviders(config);
   const provider = overrides.provider ?? built!.provider;
-  const metadata = overrides.metadata !== undefined ? overrides.metadata : (built?.metadata ?? null);
+  const metadata =
+    overrides.metadata !== undefined ? overrides.metadata : (built?.metadata ?? null);
 
   const catalog = new CatalogService({
     store,
@@ -122,8 +126,14 @@ export function createApp(config: AppConfig, logger: Logger, overrides: AppOverr
     // ioredis emits 'error' on connection problems; without a listener Node
     // would crash the process. It reconnects on its own, so log and carry on.
     const redisLog = logger.child({ component: 'redis' });
-    for (const [role, client] of [['store', store.client], ['pub', redisPubSub.pub], ['sub', redisPubSub.sub]] as const) {
-      client.on('error', (err: Error) => redisLog.warn({ err: err.message, role }, 'redis connection error'));
+    for (const [role, client] of [
+      ['store', store.client],
+      ['pub', redisPubSub.pub],
+      ['sub', redisPubSub.sub],
+    ] as const) {
+      client.on('error', (err: Error) =>
+        redisLog.warn({ err: err.message, role }, 'redis connection error'),
+      );
     }
   }
   const realtime = createSocketServer({

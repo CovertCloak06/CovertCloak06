@@ -23,7 +23,8 @@ export function validateProfile(p: Profile): ProfileErrors {
   if (p.services.length === 0) errors.services = 'Select at least one subscription';
   else if (country) {
     const sold = new Set(servicesForCountry(country).map((s) => s.id));
-    if (p.services.some((s) => !sold.has(s))) errors.services = 'Some selected services are not sold in that country';
+    if (p.services.some((s) => !sold.has(s)))
+      errors.services = 'Some selected services are not sold in that country';
   }
   return errors;
 }
@@ -39,8 +40,17 @@ export function parseStoredProfile(raw: string | null): Profile | null {
   if (!raw) return null;
   try {
     const v = JSON.parse(raw) as Partial<Profile>;
-    if (typeof v.displayName !== 'string' || typeof v.country !== 'string' || !Array.isArray(v.services)) return null;
-    const profile = { displayName: v.displayName, country: v.country, services: v.services.filter((s): s is string => typeof s === 'string') };
+    if (
+      typeof v.displayName !== 'string' ||
+      typeof v.country !== 'string' ||
+      !Array.isArray(v.services)
+    )
+      return null;
+    const profile = {
+      displayName: v.displayName,
+      country: v.country,
+      services: v.services.filter((s): s is string => typeof s === 'string'),
+    };
     return Object.keys(validateProfile(profile)).length === 0 ? profile : null;
   } catch {
     return null;

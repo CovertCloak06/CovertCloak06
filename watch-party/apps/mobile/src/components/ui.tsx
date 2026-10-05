@@ -12,10 +12,21 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { radius, space, usePalette } from '@/lib/theme';
 
-export function Screen({ children, style, edges }: { children: ReactNode; style?: StyleProp<ViewStyle>; edges?: Array<'top' | 'bottom' | 'left' | 'right'> }) {
+export function Screen({
+  children,
+  style,
+  edges,
+}: {
+  children: ReactNode;
+  style?: StyleProp<ViewStyle>;
+  edges?: Array<'top' | 'bottom' | 'left' | 'right'>;
+}) {
   const c = usePalette();
   return (
-    <SafeAreaView edges={edges ?? ['bottom', 'left', 'right']} style={[{ flex: 1, backgroundColor: c.bg }, style]}>
+    <SafeAreaView
+      edges={edges ?? ['bottom', 'left', 'right']}
+      style={[{ flex: 1, backgroundColor: c.bg }, style]}
+    >
       {children}
     </SafeAreaView>
   );
@@ -41,8 +52,20 @@ export function Button({
   accessibilityHint?: string;
 }) {
   const c = usePalette();
-  const bg = variant === 'primary' ? c.accent : variant === 'danger' ? c.danger : variant === 'secondary' ? c.elevated : 'transparent';
-  const fg = variant === 'primary' || variant === 'danger' ? c.accentText : variant === 'ghost' ? c.accent : c.text;
+  const bg =
+    variant === 'primary'
+      ? c.accent
+      : variant === 'danger'
+        ? c.danger
+        : variant === 'secondary'
+          ? c.elevated
+          : 'transparent';
+  const fg =
+    variant === 'primary' || variant === 'danger'
+      ? c.accentText
+      : variant === 'ghost'
+        ? c.accent
+        : c.text;
   const inactive = disabled || loading;
   return (
     <Pressable
@@ -58,12 +81,26 @@ export function Button({
         style,
       ]}
     >
-      {loading ? <ActivityIndicator color={fg} /> : <Text style={[styles.buttonLabel, { color: fg }]}>{label}</Text>}
+      {loading ? (
+        <ActivityIndicator color={fg} />
+      ) : (
+        <Text style={[styles.buttonLabel, { color: fg }]}>{label}</Text>
+      )}
     </Pressable>
   );
 }
 
-export function Chip({ label, selected, onPress, disabled }: { label: string; selected: boolean; onPress: () => void; disabled?: boolean }) {
+export function Chip({
+  label,
+  selected,
+  onPress,
+  disabled,
+}: {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+  disabled?: boolean;
+}) {
   const c = usePalette();
   return (
     <Pressable
@@ -87,7 +124,11 @@ export function Chip({ label, selected, onPress, disabled }: { label: string; se
 
 export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
   const c = usePalette();
-  return <View style={[styles.card, { backgroundColor: c.card, borderColor: c.border }, style]}>{children}</View>;
+  return (
+    <View style={[styles.card, { backgroundColor: c.card, borderColor: c.border }, style]}>
+      {children}
+    </View>
+  );
 }
 
 export function Label({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) {
@@ -104,16 +145,35 @@ export function Title({ children, style }: { children: ReactNode; style?: StyleP
   );
 }
 
-export function Body({ children, style, muted }: { children: ReactNode; style?: StyleProp<TextStyle>; muted?: boolean }) {
+export function Body({
+  children,
+  style,
+  muted,
+}: {
+  children: ReactNode;
+  style?: StyleProp<TextStyle>;
+  muted?: boolean;
+}) {
   const c = usePalette();
   return <Text style={[styles.body, { color: muted ? c.muted : c.text }, style]}>{children}</Text>;
 }
 
-export function Banner({ tone, children, action }: { tone: 'info' | 'warning' | 'danger'; children: ReactNode; action?: { label: string; onPress: () => void } }) {
+export function Banner({
+  tone,
+  children,
+  action,
+}: {
+  tone: 'info' | 'warning' | 'danger';
+  children: ReactNode;
+  action?: { label: string; onPress: () => void };
+}) {
   const c = usePalette();
   const color = tone === 'danger' ? c.danger : tone === 'warning' ? c.warning : c.accent;
   return (
-    <View accessibilityRole="alert" style={[styles.banner, { borderColor: color, backgroundColor: c.card }]}>
+    <View
+      accessibilityRole="alert"
+      style={[styles.banner, { borderColor: color, backgroundColor: c.card }]}
+    >
       <Text style={{ color: c.text, flex: 1 }}>{children}</Text>
       {action ? <Button label={action.label} variant="ghost" onPress={action.onPress} /> : null}
     </View>
@@ -141,7 +201,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   card: { borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, padding: space.lg },
-  label: { fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: space.sm },
+  label: {
+    fontSize: 13,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginBottom: space.sm,
+  },
   title: { fontSize: 26, fontWeight: '800' },
   body: { fontSize: 16, lineHeight: 22 },
   banner: {

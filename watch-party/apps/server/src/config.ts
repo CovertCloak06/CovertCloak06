@@ -108,12 +108,15 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       break;
     case 'streaming-availability':
       if (!streamingAvailability) {
-        throw new ConfigError('CATALOG_PROVIDER=streaming-availability needs STREAMING_AVAILABILITY_API_KEY');
+        throw new ConfigError(
+          'CATALOG_PROVIDER=streaming-availability needs STREAMING_AVAILABILITY_API_KEY',
+        );
       }
       provider = 'streaming-availability';
       break;
     case 'tmdb':
-      if (!tmdb) throw new ConfigError('CATALOG_PROVIDER=tmdb needs TMDB_READ_TOKEN or TMDB_API_KEY');
+      if (!tmdb)
+        throw new ConfigError('CATALOG_PROVIDER=tmdb needs TMDB_READ_TOKEN or TMDB_API_KEY');
       provider = 'tmdb';
       break;
     default:
@@ -130,7 +133,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   }
   if (!tmdb) warnings.push('No TMDB credentials: titles will lack runtime/backdrop enrichment');
   if (!e.REDIS_URL) {
-    warnings.push('REDIS_URL not set: using in-memory store (single instance, state lost on restart)');
+    warnings.push(
+      'REDIS_URL not set: using in-memory store (single instance, state lost on restart)',
+    );
   }
 
   return {

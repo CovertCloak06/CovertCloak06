@@ -9,7 +9,16 @@ import * as Crypto from 'expo-crypto';
 import { useKeepAwake } from 'expo-keep-awake';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActionSheetIOS, Alert, Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActionSheetIOS,
+  Alert,
+  Linking,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import WebView, { type WebViewMessageEvent } from 'react-native-webview';
 import type { ShouldStartLoadRequest } from 'react-native-webview/lib/WebViewTypes';
@@ -39,34 +48,38 @@ export default function Watch() {
   const insets = useSafeAreaInsets();
   const { session } = useApp();
   const store = useRoomStore();
-  const { state, drift, connection, scheduled, lastRemoteAction, autoplayBlocked } = useRoom();
+  const { state, drift, connection, scheduled, autoplayBlocked } = useRoom();
 
   const options: WatchOption[] = (session && state?.selection?.watchOptions[session.userId]) || [];
   const [optionIndex, setOptionIndex] = useState<number | null>(null);
   const option = optionIndex !== null ? (options[optionIndex] ?? null) : preferredOption(options);
 
-  const [mode, setMode] = useState<PlaybackMode>('webview');
-  const [fallbackReason, setFallbackReason] = useState('');
+  // The user's explicit choice, remembered per service; otherwise the mode
+  // follows from the service (native-only services start in the app).
+  const [override, setOverride] = useState<{
+    serviceId: string;
+    mode: PlaybackMode;
+    reason: string;
+  } | null>(null);
   const [desktopSite, setDesktopSite] = useState(false);
   const [webKey, setWebKey] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
   const webRef = useRef<WebView>(null);
-  const nonce = useMemo(randomNonce, []);
+  const [nonce] = useState(randomNonce);
 
-  // Pick the starting mode whenever the chosen service changes.
-  useEffect(() => {
-    if (!option) return;
-    const initial = initialPlaybackMode(option);
-    setMode(initial);
-    if (initial === 'native') {
-      setFallbackReason(`${option.serviceName} doesn't allow playback inside other apps on phones, so you'll watch in the ${option.serviceName} app and sync by the room clock.`);
-    }
-  }, [option?.serviceId, option]);
+  const serviceId = option?.serviceId ?? null;
+  const active = override && override.serviceId === serviceId ? override : null;
+  const mode: PlaybackMode = active?.mode ?? (option ? initialPlaybackMode(option) : 'webview');
+  const fallbackReason =
+    active?.reason ??
+    (option
+      ? `${option.serviceName} doesn't allow playback inside other apps on phones, so you'll watch in the ${option.serviceName} app and sync by the room clock.`
+      : '');
 
-  const service = option ? getService(option.serviceId) : undefined;
+  const service = serviceId ? getService(serviceId) : undefined;
   const injection = useMemo(
-    () => (option ? buildPlayerInjection({ nonce, adapter: adapterFor(option.serviceId) }) : ''),
-    [nonce, option?.serviceId, option],
+    () => (serviceId ? buildPlayerInjection({ nonce, adapter: adapterFor(serviceId) }) : ''),
+    [nonce, serviceId],
   );
 
   // Commands from the room go into the page as a string literal (never code).
@@ -80,29 +93,40 @@ export default function Watch() {
   );
 
   useEffect(() => {
-    if (mode !== 'webview' || !option) return;
+    if (mode !== 'webview' || !serviceId) return;
     store.client.attachPlayer(port);
     store.client.reportStatus('loading');
     return () => store.client.detachPlayer();
-  }, [mode, option?.serviceId, option, port, store, webKey]);
+  }, [mode, serviceId, port, store, webKey]);
 
-  // "Ben paused" toasts.
+  // "Ben paused" toasts, straight from the room client's event stream.
   useEffect(() => {
-    if (!lastRemoteAction || !state) return;
-    const who = state.members.find((m) => m.userId === lastRemoteAction.senderId)?.displayName ?? 'Someone';
-    const verb = lastRemoteAction.action === 'PLAY' ? 'pressed play' : lastRemoteAction.action === 'PAUSE' ? 'paused' : 'skipped';
-    setToast(`${who} ${verb}`);
-    const t = setTimeout(() => setToast(null), 2_000);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lastRemoteAction]);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const off = store.client.on('remoteAction', (action) => {
+      const who =
+        store.client.state?.members.find((m) => m.userId === action.senderId)?.displayName ??
+        'Someone';
+      const verb =
+        action.action === 'PLAY'
+          ? 'pressed play'
+          : action.action === 'PAUSE'
+            ? 'paused'
+            : 'skipped';
+      setToast(`${who} ${verb}`);
+      clearTimeout(timer);
+      timer = setTimeout(() => setToast(null), 2_000);
+    });
+    return () => {
+      off();
+      clearTimeout(timer);
+    };
+  }, [store]);
 
   const switchToNative = useCallback(
     (reason: string) => {
-      setFallbackReason(reason);
-      setMode('native');
+      if (serviceId) setOverride({ serviceId, mode: 'native', reason });
     },
-    [],
+    [serviceId],
   );
 
   const onMessage = useCallback(
@@ -115,7 +139,11 @@ export default function Watch() {
           `This device blocks protected video inside apps. Watch in the ${option.serviceName} app and sync by the room clock instead?`,
           [
             { text: 'Stay', style: 'cancel' },
-            { text: 'Use the app', onPress: () => switchToNative(`Playback was blocked in the in-app player (${event.message}).`) },
+            {
+              text: 'Use the app',
+              onPress: () =>
+                switchToNative(`Playback was blocked in the in-app player (${event.message}).`),
+            },
           ],
         );
       }
@@ -137,8 +165,17 @@ export default function Watch() {
   const showMenu = () => {
     if (!option) return;
     const items: Array<{ label: string; run: () => void; destructive?: boolean }> = [
-      { label: `Watch in the ${option.serviceName} app`, run: () => switchToNative('You chose the native app. Sync by the room clock.') },
-      { label: desktopSite ? 'Use mobile site' : 'Request desktop site', run: () => { setDesktopSite((d) => !d); setWebKey((k) => k + 1); } },
+      {
+        label: `Watch in the ${option.serviceName} app`,
+        run: () => switchToNative('You chose the native app. Sync by the room clock.'),
+      },
+      {
+        label: desktopSite ? 'Use mobile site' : 'Request desktop site',
+        run: () => {
+          setDesktopSite((d) => !d);
+          setWebKey((k) => k + 1);
+        },
+      },
       { label: 'Reload player', run: () => setWebKey((k) => k + 1) },
       ...options
         .map((o, i) => ({ o, i }))
@@ -152,7 +189,10 @@ export default function Watch() {
         (idx) => items[idx]?.run(),
       );
     } else {
-      Alert.alert('Player', undefined, [...items.map((i) => ({ text: i.label, onPress: i.run })), { text: 'Cancel', style: 'cancel' as const }]);
+      Alert.alert('Player', undefined, [
+        ...items.map((i) => ({ text: i.label, onPress: i.run })),
+        { text: 'Cancel', style: 'cancel' as const },
+      ]);
     }
   };
 
@@ -169,7 +209,8 @@ export default function Watch() {
     return (
       <Screen style={{ padding: space.lg, justifyContent: 'center', gap: space.lg }}>
         <Banner tone="warning">
-          “{state.selection.title}” isn't on any of your subscriptions in your country. You may be able to rent it on a store.
+          “{state.selection.title}” isn't on any of your subscriptions in your country. You may be
+          able to rent it on a store.
         </Banner>
         <Button label="Back to lobby" onPress={() => router.back()} />
       </Screen>
@@ -178,12 +219,24 @@ export default function Watch() {
 
   const isHost = session?.userId === state.hostId;
   const others = state.members.filter((m) => m.userId !== session?.userId);
-  const waitingOn = others.filter((m) => m.status === 'buffering' || m.status === 'loading' || m.status === 'blocked');
+  const waitingOn = others.filter(
+    (m) => m.status === 'buffering' || m.status === 'loading' || m.status === 'blocked',
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: '#000' }}>
-      <View style={[styles.bar, { paddingTop: insets.top + space.xs, backgroundColor: c.bg, borderColor: c.border }]}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Back to lobby" onPress={() => router.back()} hitSlop={12}>
+      <View
+        style={[
+          styles.bar,
+          { paddingTop: insets.top + space.xs, backgroundColor: c.bg, borderColor: c.border },
+        ]}
+      >
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Back to lobby"
+          onPress={() => router.back()}
+          hitSlop={12}
+        >
           <Text style={{ color: c.accent, fontSize: 16, fontWeight: '700' }}>‹ Lobby</Text>
         </Pressable>
         <View style={{ flex: 1, alignItems: 'center' }}>
@@ -193,23 +246,40 @@ export default function Watch() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.xs }}>
             <StatusDot color={connection === 'connected' ? c.success : c.warning} />
             <Text style={{ color: c.muted, fontSize: 12 }}>
-              {option.serviceName} · {isHost ? 'you are the time source' : `drift ${formatDrift(drift)}`} · {state.members.length} watching
+              {option.serviceName} ·{' '}
+              {isHost ? 'you are the time source' : `drift ${formatDrift(drift)}`} ·{' '}
+              {state.members.length} watching
             </Text>
           </View>
         </View>
-        <Pressable accessibilityRole="button" accessibilityLabel="Player options" onPress={showMenu} hitSlop={12}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Player options"
+          onPress={showMenu}
+          hitSlop={12}
+        >
           <Text style={{ color: c.accent, fontSize: 22, fontWeight: '800' }}>⋯</Text>
         </Pressable>
       </View>
 
-      {connection === 'reconnecting' ? <Banner tone="warning">Reconnecting… playback keeps going locally.</Banner> : null}
+      {connection === 'reconnecting' ? (
+        <Banner tone="warning">Reconnecting… playback keeps going locally.</Banner>
+      ) : null}
       {autoplayBlocked ? (
         <Banner tone="info" action={{ label: 'OK', onPress: () => store.dismissAutoplayBlocked() }}>
           Tap play in the player to catch up with everyone.
         </Banner>
       ) : null}
       {waitingOn.length > 0 ? (
-        <Text style={{ color: '#ddd', backgroundColor: '#111', padding: space.xs, textAlign: 'center', fontSize: 12 }}>
+        <Text
+          style={{
+            color: '#ddd',
+            backgroundColor: '#111',
+            padding: space.xs,
+            textAlign: 'center',
+            fontSize: 12,
+          }}
+        >
           Waiting on {waitingOn.map((m) => m.displayName).join(', ')}
         </Text>
       ) : null}
@@ -245,18 +315,26 @@ export default function Watch() {
           <NativeFallback
             option={option}
             reason={fallbackReason}
-            {...(option.mobileWeb !== 'unsupported' ? { onTryWebView: () => setMode('webview') } : {})}
+            {...(option.mobileWeb !== 'unsupported'
+              ? {
+                  onTryWebView: () =>
+                    setOverride({ serviceId: option.serviceId, mode: 'webview', reason: '' }),
+                }
+              : {})}
           />
         </View>
       )}
 
       {toast ? (
-        <View pointerEvents="none" style={[styles.toast, { bottom: insets.bottom + space.xl, backgroundColor: c.overlay }]}>
+        <View
+          pointerEvents="none"
+          style={[styles.toast, { bottom: insets.bottom + space.xl, backgroundColor: c.overlay }]}
+        >
           <Text style={{ color: '#fff', fontWeight: '700' }}>{toast}</Text>
         </View>
       ) : null}
 
-      {scheduled && scheduled.startAtLocal + 1_500 > Date.now() ? (
+      {scheduled ? (
         <Countdown
           startAtLocal={scheduled.startAtLocal}
           timecode={scheduled.timecode}

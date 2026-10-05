@@ -11,7 +11,8 @@ export default defineConfig({
   use: { baseURL: `http://127.0.0.1:${PORT}`, trace: 'retain-on-failure' },
   webServer: {
     // The server package's harness build and sample media provide the pages under /dev.
-    command: 'npm run build:harness -w @watch-party/server && npm run media -w @watch-party/server && npx tsx ../server/src/index.ts',
+    command:
+      'npm run build:harness -w @watch-party/server && npm run media -w @watch-party/server && npx tsx ../server/src/index.ts',
     cwd: '.',
     url: `http://127.0.0.1:${PORT}/healthz`,
     reuseExistingServer: !process.env.CI,

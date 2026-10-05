@@ -10,10 +10,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.covertcloak.watchparty",
       "infoPlist": {
-        "LSApplicationQueriesSchemes": [
-          "nflx",
-          "disneyplus"
-        ]
+        "LSApplicationQueriesSchemes": ["nflx", "disneyplus"]
       }
     },
     "android": {
@@ -29,11 +26,7 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-router",
-      "expo-status-bar",
-      "expo-secure-store"
-    ],
+    "plugins": ["expo-router", "expo-status-bar", "expo-secure-store"],
     "scheme": "watchparty",
     "experiments": {
       "typedRoutes": true

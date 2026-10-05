@@ -165,9 +165,7 @@ export class ClockSync {
     const best = [...this.samples].sort((a, b) => a.rtt - b.rtt).slice(0, this.bestOf);
     const offsets = best.map((s) => s.offset).sort((a, b) => a - b);
     const mid = Math.floor(offsets.length / 2);
-    return offsets.length % 2 === 1
-      ? offsets[mid]!
-      : (offsets[mid - 1]! + offsets[mid]!) / 2;
+    return offsets.length % 2 === 1 ? offsets[mid]! : (offsets[mid - 1]! + offsets[mid]!) / 2;
   }
 
   /** Median round-trip of the best samples, ms. */

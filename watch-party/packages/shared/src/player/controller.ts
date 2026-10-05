@@ -353,7 +353,11 @@ export class PlayerController {
   // Remote commands -> video
   // ---------------------------------------------------------------------------
 
-  private applyRemoteAction(action: 'PLAY' | 'PAUSE' | 'SEEK', timecode: number, asOf: number): void {
+  private applyRemoteAction(
+    action: 'PLAY' | 'PAUSE' | 'SEEK',
+    timecode: number,
+    asOf: number,
+  ): void {
     const video = this.video;
     if (!video) return;
     const now = this.now();

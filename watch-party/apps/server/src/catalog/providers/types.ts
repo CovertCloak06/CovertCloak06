@@ -22,7 +22,11 @@ export interface CatalogProvider {
   readonly id: string;
   /** Attribution the client must display (e.g. "Data from JustWatch via TMDB"). */
   readonly attribution: string;
-  fetchCatalog(country: string, service: ServiceDefinition, signal?: AbortSignal): Promise<ProviderCatalog>;
+  fetchCatalog(
+    country: string,
+    service: ServiceDefinition,
+    signal?: AbortSignal,
+  ): Promise<ProviderCatalog>;
 }
 
 /** Optional metadata enrichment (TMDB) for runtime, overview and artwork. */

@@ -9,7 +9,12 @@ import {
 import { countryFlag, normalizeCountryCode } from '../src/countries.js';
 import { nativeDeepLink, getService, serviceForUrl, servicesForCountry } from '../src/services.js';
 
-const entry = (tmdbId: number, title: string, popularity: number, link: string | null = null): CatalogEntry => ({
+const entry = (
+  tmdbId: number,
+  title: string,
+  popularity: number,
+  link: string | null = null,
+): CatalogEntry => ({
   tmdbId,
   title,
   popularity,
@@ -59,16 +64,20 @@ describe('services', () => {
 describe('normalizeSubscription', () => {
   it('canonicalises country and de-duplicates services', () => {
     expect(
-      normalizeSubscription({ userId: 'a', countryCode: 'UK', services: ['prime', 'netflix', 'prime'] }),
+      normalizeSubscription({
+        userId: 'a',
+        countryCode: 'UK',
+        services: ['prime', 'netflix', 'prime'],
+      }),
     ).toEqual({ userId: 'a', countryCode: 'GB', services: ['netflix', 'prime'] });
   });
   it('rejects unknown services, countries and empty service lists', () => {
-    expect(() => normalizeSubscription({ userId: 'a', countryCode: 'US', services: ['vhs'] })).toThrow(
-      InvalidSubscriptionError,
-    );
-    expect(() => normalizeSubscription({ userId: 'a', countryCode: 'XX', services: ['netflix'] })).toThrow(
-      InvalidSubscriptionError,
-    );
+    expect(() =>
+      normalizeSubscription({ userId: 'a', countryCode: 'US', services: ['vhs'] }),
+    ).toThrow(InvalidSubscriptionError);
+    expect(() =>
+      normalizeSubscription({ userId: 'a', countryCode: 'XX', services: ['netflix'] }),
+    ).toThrow(InvalidSubscriptionError);
     expect(() => normalizeSubscription({ userId: 'a', countryCode: 'US', services: [] })).toThrow(
       InvalidSubscriptionError,
     );
@@ -82,7 +91,13 @@ describe('intersectCatalogs', () => {
         userId: 'us',
         countryCode: 'US',
         catalogs: [
-          { serviceId: 'netflix', entries: [entry(1, 'Alpha', 10, 'https://www.netflix.com/title/1'), entry(2, 'Beta', 50)] },
+          {
+            serviceId: 'netflix',
+            entries: [
+              entry(1, 'Alpha', 10, 'https://www.netflix.com/title/1'),
+              entry(2, 'Beta', 50),
+            ],
+          },
           { serviceId: 'hulu', entries: [entry(3, 'Gamma', 30)] },
         ],
       },
@@ -128,8 +143,16 @@ describe('intersectCatalogs', () => {
   it('returns nothing when any user has no overlap', () => {
     expect(
       intersectCatalogs([
-        { userId: 'a', countryCode: 'US', catalogs: [{ serviceId: 'netflix', entries: [entry(1, 'A', 1)] }] },
-        { userId: 'b', countryCode: 'GB', catalogs: [{ serviceId: 'netflix', entries: [entry(2, 'B', 1)] }] },
+        {
+          userId: 'a',
+          countryCode: 'US',
+          catalogs: [{ serviceId: 'netflix', entries: [entry(1, 'A', 1)] }],
+        },
+        {
+          userId: 'b',
+          countryCode: 'GB',
+          catalogs: [{ serviceId: 'netflix', entries: [entry(2, 'B', 1)] }],
+        },
       ]),
     ).toEqual([]);
     expect(intersectCatalogs([])).toEqual([]);

@@ -14,14 +14,28 @@ const users: UserSubscription[] = [
 
 function makeStub() {
   return new StubProvider({
-    'US:netflix': [title(1, 'Alpha', 50, 'https://www.netflix.com/title/111'), title(2, 'Beta', 40), title(5, 'Epsilon', 10)],
+    'US:netflix': [
+      title(1, 'Alpha', 50, 'https://www.netflix.com/title/111'),
+      title(2, 'Beta', 40),
+      title(5, 'Epsilon', 10),
+    ],
     'US:hulu': [title(3, 'Gamma', 30)],
     'GB:prime': [title(1, 'Alpha', 20), title(3, 'Gamma', 35), title(4, 'Delta', 99)],
   });
 }
 
 function makeService(store: Store, provider = makeStub(), now = () => Date.now()) {
-  return { provider, svc: new CatalogService({ store, provider, ttlMs: 3_600_000, logger: silentLogger, now, random: () => 0.5 }) };
+  return {
+    provider,
+    svc: new CatalogService({
+      store,
+      provider,
+      ttlMs: 3_600_000,
+      logger: silentLogger,
+      now,
+      random: () => 0.5,
+    }),
+  };
 }
 
 describe('CatalogService', () => {
@@ -35,14 +49,24 @@ describe('CatalogService', () => {
     const alpha = res.results[0]!;
     expect(alpha.popularity).toBe(50);
     expect(alpha.watchOptions.ana).toEqual([
-      expect.objectContaining({ serviceId: 'netflix', directLink: true, nativeUrl: 'nflx://www.netflix.com/title/111' }),
+      expect.objectContaining({
+        serviceId: 'netflix',
+        directLink: true,
+        nativeUrl: 'nflx://www.netflix.com/title/111',
+      }),
     ]);
-    expect(alpha.watchOptions.ben).toEqual([expect.objectContaining({ serviceId: 'prime', countryCode: 'GB' })]);
+    expect(alpha.watchOptions.ben).toEqual([
+      expect.objectContaining({ serviceId: 'prime', countryCode: 'GB' }),
+    ]);
   });
 
   it('caches catalogs: each (country, service) is fetched once', async () => {
     const { svc, provider } = makeService(new MemoryStore());
-    await Promise.all([svc.getCommonTitles(users), svc.getCommonTitles(users), svc.getCommonTitles([users[0]!])]);
+    await Promise.all([
+      svc.getCommonTitles(users),
+      svc.getCommonTitles(users),
+      svc.getCommonTitles([users[0]!]),
+    ]);
     expect(provider.calls.sort()).toEqual(['GB:prime', 'US:hulu', 'US:netflix']);
   });
 
@@ -77,14 +101,22 @@ describe('CatalogService', () => {
     const page2 = await svc.getCommonTitles(u, { page: 2, pageSize: 2 });
     expect(page2.results.map((r) => r.title)).toEqual(['Amélie']);
     expect(page2.totalResults).toBe(3);
-    expect((await svc.getCommonTitles(u, { genre: 'horror' })).results.map((r) => r.title)).toEqual(['Alien']);
-    expect((await svc.getCommonTitles(u, { query: 'amelie' })).results.map((r) => r.title)).toEqual(['Amélie']);
+    expect((await svc.getCommonTitles(u, { genre: 'horror' })).results.map((r) => r.title)).toEqual(
+      ['Alien'],
+    );
+    expect((await svc.getCommonTitles(u, { query: 'amelie' })).results.map((r) => r.title)).toEqual(
+      ['Amélie'],
+    );
   });
 
   it('flags partial results when a catalog was truncated by the page budget', async () => {
-    const provider = new StubProvider({ 'US:netflix': { entries: [title(1, 'A', 1)], truncated: true } });
+    const provider = new StubProvider({
+      'US:netflix': { entries: [title(1, 'A', 1)], truncated: true },
+    });
     const { svc } = makeService(new MemoryStore(), provider);
-    const res = await svc.getCommonTitles([{ userId: 'a', countryCode: 'US', services: ['netflix'] }]);
+    const res = await svc.getCommonTitles([
+      { userId: 'a', countryCode: 'US', services: ['netflix'] },
+    ]);
     expect(res.partial).toBe(true);
   });
 
@@ -106,12 +138,26 @@ describe('CatalogService', () => {
       metadata: {
         async getMovie(id) {
           calls++;
-          return { tmdbId: id, title: 'x', overview: 'Plot', releaseYear: 2001, runtimeMinutes: 99, posterUrl: 'p', backdropUrl: 'b', genres: [] };
+          return {
+            tmdbId: id,
+            title: 'x',
+            overview: 'Plot',
+            releaseYear: 2001,
+            runtimeMinutes: 99,
+            posterUrl: 'p',
+            backdropUrl: 'b',
+            genres: [],
+          };
         },
       },
     });
     const first = await svc.getCommonTitles(users);
-    expect(first.results[0]).toMatchObject({ title: 'Alpha', runtimeMinutes: 99, overview: 'Plot', posterUrl: 'p' });
+    expect(first.results[0]).toMatchObject({
+      title: 'Alpha',
+      runtimeMinutes: 99,
+      overview: 'Plot',
+      posterUrl: 'p',
+    });
     await svc.getCommonTitles(users);
     expect(calls).toBe(2); // two titles, enriched once each
   });
@@ -136,13 +182,21 @@ describe('CatalogService', () => {
           userId: p.userId,
           countryCode: p.countryCode,
           catalogs: await Promise.all(
-            p.services.map(async (s) => ({ serviceId: s, entries: (await fixture.fetchCatalog(p.countryCode, getService(s)!)).entries })),
+            p.services.map(async (s) => ({
+              serviceId: s,
+              entries: (await fixture.fetchCatalog(p.countryCode, getService(s)!)).entries,
+            })),
           ),
         })),
       ),
     );
     for (const store of stores) {
-      const svc = new CatalogService({ store, provider: fixture, ttlMs: 3_600_000, logger: silentLogger });
+      const svc = new CatalogService({
+        store,
+        provider: fixture,
+        ttlMs: 3_600_000,
+        logger: silentLogger,
+      });
       const res = await svc.getCommonTitles(people, { pageSize: 100 });
       expect(res.results.map((r) => r.tmdbId)).toEqual(reference.map((r) => r.entry.tmdbId));
       for (const r of res.results) {

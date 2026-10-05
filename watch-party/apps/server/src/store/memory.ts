@@ -86,7 +86,12 @@ export class MemoryStore implements Store {
     }
   }
 
-  async zunionStore(dest: string, keys: string[], aggregate: Aggregate, ttlMs: number): Promise<number> {
+  async zunionStore(
+    dest: string,
+    keys: string[],
+    aggregate: Aggregate,
+    ttlMs: number,
+  ): Promise<number> {
     const out = new Map<string, number>();
     for (const k of keys) {
       for (const [m, s] of this.zset(k)) {
@@ -98,7 +103,12 @@ export class MemoryStore implements Store {
     return out.size;
   }
 
-  async zinterStore(dest: string, keys: string[], aggregate: Aggregate, ttlMs: number): Promise<number> {
+  async zinterStore(
+    dest: string,
+    keys: string[],
+    aggregate: Aggregate,
+    ttlMs: number,
+  ): Promise<number> {
     const sets = keys.map((k) => this.zset(k));
     const out = new Map<string, number>();
     const [first, ...rest] = sets;
@@ -122,7 +132,9 @@ export class MemoryStore implements Store {
   }
 
   async zrevrange(key: string, start: number, stop: number): Promise<string[]> {
-    const sorted = [...this.zset(key)].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? 1 : a[0] > b[0] ? -1 : 0));
+    const sorted = [...this.zset(key)].sort(
+      (a, b) => b[1] - a[1] || (a[0] < b[0] ? 1 : a[0] > b[0] ? -1 : 0),
+    );
     const end = stop < 0 ? sorted.length + stop + 1 : stop + 1;
     return sorted.slice(start, end).map(([m]) => m);
   }

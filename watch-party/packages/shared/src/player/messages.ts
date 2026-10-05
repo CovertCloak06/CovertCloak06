@@ -153,7 +153,8 @@ function unwrap(raw: unknown, nonce: string): unknown {
     }
   }
   if (!isObj(value)) return undefined;
-  if (value.source !== PLAYER_MESSAGE_SOURCE || value.v !== PLAYER_MESSAGE_VERSION) return undefined;
+  if (value.source !== PLAYER_MESSAGE_SOURCE || value.v !== PLAYER_MESSAGE_VERSION)
+    return undefined;
   if (typeof nonce !== 'string' || nonce.length === 0 || value.nonce !== nonce) return undefined;
   return value.message;
 }

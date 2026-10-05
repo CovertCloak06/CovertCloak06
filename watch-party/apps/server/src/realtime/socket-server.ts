@@ -50,8 +50,18 @@ interface SocketData {
   roomId: string | null;
 }
 
-type IoServer = Server<ClientToServerEvents, ServerToClientEvents, Record<string, never>, SocketData>;
-type IoSocket = Socket<ClientToServerEvents, ServerToClientEvents, Record<string, never>, SocketData>;
+type IoServer = Server<
+  ClientToServerEvents,
+  ServerToClientEvents,
+  Record<string, never>,
+  SocketData
+>;
+type IoSocket = Socket<
+  ClientToServerEvents,
+  ServerToClientEvents,
+  Record<string, never>,
+  SocketData
+>;
 
 export interface SocketServerOptions {
   httpServer: HttpServer;
@@ -67,7 +77,10 @@ export interface SocketServerOptions {
 
 const channel = (roomId: string) => `room:${roomId}`;
 
-export function createSocketServer(opts: SocketServerOptions): { io: IoServer; close: () => Promise<void> } {
+export function createSocketServer(opts: SocketServerOptions): {
+  io: IoServer;
+  close: () => Promise<void>;
+} {
   const log = opts.logger.child({ component: 'realtime' });
   const io: IoServer = new Server(opts.httpServer, {
     cors: { origin: opts.corsOrigins === '*' ? '*' : opts.corsOrigins },
@@ -97,7 +110,8 @@ export function createSocketServer(opts: SocketServerOptions): { io: IoServer; c
     next();
   });
 
-  const broadcastState = (state: RoomState) => io.to(channel(state.roomId)).emit(ServerEvent.ROOM_STATE, state);
+  const broadcastState = (state: RoomState) =>
+    io.to(channel(state.roomId)).emit(ServerEvent.ROOM_STATE, state);
 
   io.on('connection', (socket: IoSocket) => {
     const userId = socket.data.userId;
@@ -121,7 +135,10 @@ export function createSocketServer(opts: SocketServerOptions): { io: IoServer; c
         }
         const parsed = schema.safeParse(raw);
         if (!parsed.success) {
-          return fail({ code: ErrorCode.BAD_REQUEST, message: parsed.error.issues[0]?.message ?? 'Invalid payload' });
+          return fail({
+            code: ErrorCode.BAD_REQUEST,
+            message: parsed.error.issues[0]?.message ?? 'Invalid payload',
+          });
         }
         try {
           const data = await fn(parsed.data);
@@ -133,7 +150,8 @@ export function createSocketServer(opts: SocketServerOptions): { io: IoServer; c
     }
 
     const requireRoom = (roomId: string) => {
-      if (socket.data.roomId !== roomId) throw new RoomError(ErrorCode.NOT_IN_ROOM, 'Join the room first');
+      if (socket.data.roomId !== roomId)
+        throw new RoomError(ErrorCode.NOT_IN_ROOM, 'Join the room first');
     };
 
     socket.on(ClientEvent.TIME_PING, (raw, ack) => {
@@ -152,7 +170,8 @@ export function createSocketServer(opts: SocketServerOptions): { io: IoServer; c
         try {
           sub = normalizeSubscription({ userId, countryCode: p.country, services: p.services });
         } catch (err) {
-          if (err instanceof InvalidSubscriptionError) throw new RoomError(ErrorCode.BAD_REQUEST, err.message);
+          if (err instanceof InvalidSubscriptionError)
+            throw new RoomError(ErrorCode.BAD_REQUEST, err.message);
           throw err;
         }
         // One room per socket: leave the previous one first.
@@ -170,12 +189,15 @@ export function createSocketServer(opts: SocketServerOptions): { io: IoServer; c
         await socket.join(channel(p.roomId));
         slog.info({ roomId: p.roomId, members: state.members.length }, 'joined room');
         // Late joiner after the title was chosen: work out where they can watch it.
-        const withOptions = state.selection && !state.selection.watchOptions[userId]
-          ? await opts.rooms.ensureSelectionOptions(p.roomId, userId, opts.catalog).catch((err) => {
-              slog.warn({ err }, 'could not compute watch options for late joiner');
-              return null;
-            })
-          : null;
+        const withOptions =
+          state.selection && !state.selection.watchOptions[userId]
+            ? await opts.rooms
+                .ensureSelectionOptions(p.roomId, userId, opts.catalog)
+                .catch((err) => {
+                  slog.warn({ err }, 'could not compute watch options for late joiner');
+                  return null;
+                })
+            : null;
         const final = withOptions ?? state;
         socket.to(channel(p.roomId)).emit(ServerEvent.ROOM_STATE, final);
         return final;
@@ -195,7 +217,13 @@ export function createSocketServer(opts: SocketServerOptions): { io: IoServer; c
       ClientEvent.SYNC_ACTION,
       handle(BUCKETS.sync, syncActionPayloadSchema, async (p) => {
         requireRoom(p.roomId);
-        const { timestamp } = await opts.rooms.applyAction(p.roomId, userId, p.action, p.timecode, p.timestamp);
+        const { timestamp } = await opts.rooms.applyAction(
+          p.roomId,
+          userId,
+          p.action,
+          p.timecode,
+          p.timestamp,
+        );
         const relayed: RelayedSyncAction = {
           roomId: p.roomId,
           senderId: userId,
@@ -232,7 +260,12 @@ export function createSocketServer(opts: SocketServerOptions): { io: IoServer; c
       ClientEvent.MEMBER_STATUS,
       handle(BUCKETS.status, memberStatusPayloadSchema, async (p) => {
         requireRoom(p.roomId);
-        const { state, changed } = await opts.rooms.setMemberStatus(p.roomId, userId, p.status, p.timecode);
+        const { state, changed } = await opts.rooms.setMemberStatus(
+          p.roomId,
+          userId,
+          p.status,
+          p.timecode,
+        );
         if (changed) broadcastState(state);
         return null;
       }),
@@ -252,7 +285,12 @@ export function createSocketServer(opts: SocketServerOptions): { io: IoServer; c
       ClientEvent.SCHEDULE_START,
       handle(BUCKETS.control, scheduleStartPayloadSchema, async (p) => {
         requireRoom(p.roomId);
-        const { state, start } = await opts.rooms.scheduleStart(p.roomId, userId, p.timecode, p.delayMs);
+        const { state, start } = await opts.rooms.scheduleStart(
+          p.roomId,
+          userId,
+          p.timecode,
+          p.delayMs,
+        );
         io.to(channel(p.roomId)).emit(ServerEvent.START_SCHEDULED, start);
         broadcastState(state);
         return start;
@@ -272,7 +310,9 @@ export function createSocketServer(opts: SocketServerOptions): { io: IoServer; c
       ClientEvent.UPDATE_SETTINGS,
       handle(BUCKETS.control, updateSettingsPayloadSchema, async (p) => {
         requireRoom(p.roomId);
-        broadcastState(await opts.rooms.updateSettings(p.roomId, userId, { hostOnlyControl: p.hostOnlyControl }));
+        broadcastState(
+          await opts.rooms.updateSettings(p.roomId, userId, { hostOnlyControl: p.hostOnlyControl }),
+        );
         return null;
       }),
     );
@@ -282,7 +322,9 @@ export function createSocketServer(opts: SocketServerOptions): { io: IoServer; c
       const roomId = socket.data.roomId;
       slog.debug({ reason, roomId }, 'disconnected');
       if (!roomId) return;
-      void track(handleDisconnect(roomId, userId)).catch((err) => slog.warn({ err }, 'disconnect handling failed'));
+      void track(handleDisconnect(roomId, userId)).catch((err) =>
+        slog.warn({ err }, 'disconnect handling failed'),
+      );
     });
   });
 
@@ -305,6 +347,13 @@ export function createSocketServer(opts: SocketServerOptions): { io: IoServer; c
   async function handleDisconnect(roomId: string, userId: string): Promise<void> {
     if (await userStillInRoom(roomId, userId)) return;
     const state = await opts.rooms.markDisconnected(roomId, userId);
+    // A fast reconnect can rejoin between the check above and the write: the
+    // "offline" flag would then be wrong. Re-check against live sockets.
+    if (await userStillInRoom(roomId, userId)) {
+      const repaired = await opts.rooms.markConnected(roomId, userId);
+      if (repaired) broadcastState(repaired);
+      return;
+    }
     if (state) broadcastState(state);
     // Keep the seat (and host role) for a grace period: phones drop
     // connections when backgrounded or switching networks.
@@ -314,11 +363,22 @@ export function createSocketServer(opts: SocketServerOptions): { io: IoServer; c
       key,
       setTimeout(() => {
         graceTimers.delete(key);
-        void track(opts.rooms.expireIfDisconnected(roomId, userId))
-          .then((s) => s && broadcastState(s))
-          .catch((err) => log.warn({ err, roomId, userId }, 'grace expiry failed'));
+        void track(expireUnlessPresent(roomId, userId)).catch((err) =>
+          log.warn({ err, roomId, userId }, 'grace expiry failed'),
+        );
       }, opts.memberGraceMs),
     );
+  }
+
+  /** Grace period over: remove the member, unless a live socket says they're back. */
+  async function expireUnlessPresent(roomId: string, userId: string): Promise<void> {
+    if (await userStillInRoom(roomId, userId)) {
+      const repaired = await opts.rooms.markConnected(roomId, userId);
+      if (repaired) broadcastState(repaired);
+      return;
+    }
+    const state = await opts.rooms.expireIfDisconnected(roomId, userId);
+    if (state) broadcastState(state);
   }
 
   function cancelGrace(roomId: string, userId: string): void {
@@ -337,7 +397,7 @@ export function createSocketServer(opts: SocketServerOptions): { io: IoServer; c
       graceTimers.clear();
       // Stop accepting connections and disconnect clients; their disconnect
       // handlers record "offline" in the store, so let them finish.
-      await new Promise<void>((resolve) => io.close(() => resolve()));
+      await io.close();
       await Promise.allSettled([...pending]);
     },
   };
@@ -350,7 +410,8 @@ function bucketName(spec: BucketSpec): string {
 
 function toProtocolError(err: unknown, log: Logger): ProtocolError {
   if (err instanceof RoomError) return err.toProtocol();
-  if (err instanceof LockTimeoutError) return { code: ErrorCode.INTERNAL, message: 'Room is busy, try again' };
+  if (err instanceof LockTimeoutError)
+    return { code: ErrorCode.INTERNAL, message: 'Room is busy, try again' };
   if (err instanceof Error && err.name === 'CatalogUnavailableError') {
     return { code: ErrorCode.CATALOG_UNAVAILABLE, message: err.message };
   }

@@ -64,8 +64,13 @@ export interface JoinInput {
 }
 
 export interface TitleResolver {
-  getTitle(tmdbId: number): Promise<{ title: string; posterUrl: string | null; runtimeMinutes: number | null } | null>;
-  watchOptionsFor(tmdbId: number, users: UserSubscription[]): Promise<Record<string, WatchOption[]>>;
+  getTitle(
+    tmdbId: number,
+  ): Promise<{ title: string; posterUrl: string | null; runtimeMinutes: number | null } | null>;
+  watchOptionsFor(
+    tmdbId: number,
+    users: UserSubscription[],
+  ): Promise<Record<string, WatchOption[]>>;
 }
 
 export interface RoomServiceOptions {
@@ -123,7 +128,13 @@ export class RoomService {
     if (s && this.now() >= s.startAt) {
       return {
         ...room,
-        playback: { paused: false, timecode: s.timecode, timestamp: s.startAt, playbackRate: 1, updatedBy: s.scheduledBy },
+        playback: {
+          paused: false,
+          timecode: s.timecode,
+          timestamp: s.startAt,
+          playbackRate: 1,
+          updatedBy: s.scheduledBy,
+        },
         scheduledStart: null,
       };
     }
@@ -143,7 +154,13 @@ export class RoomService {
         hostId: creatorId,
         createdAt: this.now(),
         members: [],
-        playback: { paused: true, timecode: 0, timestamp: this.now(), playbackRate: 1, updatedBy: null },
+        playback: {
+          paused: true,
+          timecode: 0,
+          timestamp: this.now(),
+          playbackRate: 1,
+          updatedBy: null,
+        },
         selection: null,
         scheduledStart: null,
         settings: { hostOnlyControl: false },
@@ -154,7 +171,10 @@ export class RoomService {
   }
 
   /** Runs a mutation under the room lock and persists the result. */
-  private async mutate<T>(roomId: string, fn: (room: StoredRoom) => T | Promise<T>): Promise<{ room: StoredRoom; result: T }> {
+  private async mutate<T>(
+    roomId: string,
+    fn: (room: StoredRoom) => T | Promise<T>,
+  ): Promise<{ room: StoredRoom; result: T }> {
     return this.store.withLock(`${NS}:lock:room:${roomId}`, LOCK_MS, async () => {
       const stored = await this.store.getJSON<StoredRoom>(this.key(roomId));
       if (!stored) throw new RoomError(ErrorCode.ROOM_NOT_FOUND, 'Room not found');
@@ -232,6 +252,27 @@ export class RoomService {
     }
   }
 
+  /**
+   * Marks a member online again (repairs a stale "offline" flag left by a
+   * disconnect handler that lost a race with a fast reconnect). Returns the
+   * new state only when something changed.
+   */
+  async markConnected(roomId: string, userId: string): Promise<RoomState | null> {
+    try {
+      const { room, result } = await this.mutate(roomId, (room) => {
+        const m = room.members.find((x) => x.userId === userId);
+        if (!m || m.connected) return false;
+        m.connected = true;
+        m.lastSeen = this.now();
+        return true;
+      });
+      return result ? this.snapshot(room) : null;
+    } catch (err) {
+      if (err instanceof RoomError && err.code === ErrorCode.ROOM_NOT_FOUND) return null;
+      throw err;
+    }
+  }
+
   /** Removes the member only if still disconnected (they may have come back). */
   async expireIfDisconnected(roomId: string, userId: string): Promise<RoomState | null> {
     const room = await this.store.getJSON<StoredRoom>(this.key(roomId));
@@ -254,7 +295,13 @@ export class RoomService {
       }
       const timestamp = sanitizeTimestamp(clientTimestamp, this.now());
       const paused = action === 'PAUSE' ? true : action === 'PLAY' ? false : room.playback.paused;
-      room.playback = { paused, timecode, timestamp, playbackRate: room.playback.playbackRate, updatedBy: userId };
+      room.playback = {
+        paused,
+        timecode,
+        timestamp,
+        playbackRate: room.playback.playbackRate,
+        updatedBy: userId,
+      };
       // A manual action overrides any pending countdown.
       room.scheduledStart = null;
       return timestamp;
@@ -285,7 +332,9 @@ export class RoomService {
       }
       return timestamp;
     });
-    return result === null ? { accepted: false, timestamp: 0 } : { accepted: true, timestamp: result };
+    return result === null
+      ? { accepted: false, timestamp: 0 }
+      : { accepted: true, timestamp: result };
   }
 
   /** Updates a member's status. `changed` tells the caller whether to broadcast. */
@@ -307,12 +356,21 @@ export class RoomService {
     return { state: this.snapshot(room), changed: result };
   }
 
-  async selectTitle(roomId: string, userId: string, tmdbId: number, resolver: TitleResolver): Promise<RoomState> {
+  async selectTitle(
+    roomId: string,
+    userId: string,
+    tmdbId: number,
+    resolver: TitleResolver,
+  ): Promise<RoomState> {
     // Resolve outside the lock: it may hit the catalog provider.
     const current = await this.store.getJSON<StoredRoom>(this.key(roomId));
     if (!current) throw new RoomError(ErrorCode.ROOM_NOT_FOUND, 'Room not found');
     requireHost(current, userId);
-    const users = current.members.map((m) => ({ userId: m.userId, countryCode: m.countryCode, services: m.services }));
+    const users = current.members.map((m) => ({
+      userId: m.userId,
+      countryCode: m.countryCode,
+      services: m.services,
+    }));
     const [title, watchOptions] = await Promise.all([
       resolver.getTitle(tmdbId),
       resolver.watchOptionsFor(tmdbId, users),
@@ -332,7 +390,13 @@ export class RoomService {
       };
       room.selection = selection;
       room.scheduledStart = null;
-      room.playback = { paused: true, timecode: 0, timestamp: this.now(), playbackRate: 1, updatedBy: userId };
+      room.playback = {
+        paused: true,
+        timecode: 0,
+        timestamp: this.now(),
+        playbackRate: 1,
+        updatedBy: userId,
+      };
       for (const m of room.members) m.status = m.connected ? 'loading' : m.status;
     });
     return this.snapshot(room);
@@ -342,7 +406,11 @@ export class RoomService {
    * Computes watch options for a member who joined after the title was
    * chosen. Returns null when nothing needed updating.
    */
-  async ensureSelectionOptions(roomId: string, userId: string, resolver: TitleResolver): Promise<RoomState | null> {
+  async ensureSelectionOptions(
+    roomId: string,
+    userId: string,
+    resolver: TitleResolver,
+  ): Promise<RoomState | null> {
     const current = await this.store.getJSON<StoredRoom>(this.key(roomId));
     const member = current?.members.find((m) => m.userId === userId);
     const selection = current?.selection;
@@ -358,12 +426,27 @@ export class RoomService {
     return this.snapshot(room);
   }
 
-  async scheduleStart(roomId: string, userId: string, timecode: number, delayMs: number): Promise<{ state: RoomState; start: ScheduledStart }> {
+  async scheduleStart(
+    roomId: string,
+    userId: string,
+    timecode: number,
+    delayMs: number,
+  ): Promise<{ state: RoomState; start: ScheduledStart }> {
     const { room, result } = await this.mutate(roomId, (room) => {
       requireHost(room, userId);
-      const start: ScheduledStart = { timecode, startAt: this.now() + delayMs, scheduledBy: userId };
+      const start: ScheduledStart = {
+        timecode,
+        startAt: this.now() + delayMs,
+        scheduledBy: userId,
+      };
       room.scheduledStart = start;
-      room.playback = { paused: true, timecode, timestamp: this.now(), playbackRate: 1, updatedBy: userId };
+      room.playback = {
+        paused: true,
+        timecode,
+        timestamp: this.now(),
+        playbackRate: 1,
+        updatedBy: userId,
+      };
       return start;
     });
     return { state: this.snapshot(room), start: result };
@@ -379,7 +462,11 @@ export class RoomService {
     return this.snapshot(room);
   }
 
-  async updateSettings(roomId: string, userId: string, settings: { hostOnlyControl: boolean }): Promise<RoomState> {
+  async updateSettings(
+    roomId: string,
+    userId: string,
+    settings: { hostOnlyControl: boolean },
+  ): Promise<RoomState> {
     const { room } = await this.mutate(roomId, (room) => {
       requireHost(room, userId);
       room.settings = { ...room.settings, ...settings };
@@ -408,7 +495,8 @@ function promoteHost(room: StoredRoom): void {
 
 export function generateRoomCode(): string {
   let code = '';
-  for (let i = 0; i < ROOM_CODE_LENGTH; i++) code += ROOM_CODE_ALPHABET[randomInt(ROOM_CODE_ALPHABET.length)];
+  for (let i = 0; i < ROOM_CODE_LENGTH; i++)
+    code += ROOM_CODE_ALPHABET[randomInt(ROOM_CODE_ALPHABET.length)];
   return code;
 }
 

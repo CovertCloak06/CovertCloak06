@@ -25,7 +25,12 @@ export interface MetaResponse {
   provider: string;
   attribution: string;
   countries: Country[];
-  services: Array<{ id: string; name: string; regions: string[] | null; mobileWeb: MobileWebSupport }>;
+  services: Array<{
+    id: string;
+    name: string;
+    regions: string[] | null;
+    mobileWeb: MobileWebSupport;
+  }>;
   maxRoomMembers: number;
 }
 
@@ -36,7 +41,10 @@ export interface RoomPreview {
   maxMembers: number;
 }
 
-async function request<T>(path: string, init: { method?: string; token?: string; body?: unknown } = {}): Promise<T> {
+async function request<T>(
+  path: string,
+  init: { method?: string; token?: string; body?: unknown } = {},
+): Promise<T> {
   let res: Response;
   try {
     res = await fetch(`${API_URL}${path}`, {
@@ -55,7 +63,11 @@ async function request<T>(path: string, init: { method?: string; token?: string;
   const data = text ? (JSON.parse(text) as unknown) : null;
   if (!res.ok) {
     const err = (data as { error?: { code?: string; message?: string } } | null)?.error;
-    throw new ApiError(res.status, err?.code ?? 'HTTP_ERROR', err?.message ?? `Request failed (${res.status})`);
+    throw new ApiError(
+      res.status,
+      err?.code ?? 'HTTP_ERROR',
+      err?.message ?? `Request failed (${res.status})`,
+    );
   }
   return data as T;
 }
@@ -69,8 +81,10 @@ export interface CatalogQuery {
 
 export const api = {
   createSession: () => request<SessionResponse>('/api/session', { method: 'POST' }),
-  meta: (country?: string) => request<MetaResponse>(`/api/meta${country ? `?country=${encodeURIComponent(country)}` : ''}`),
-  createRoom: (token: string) => request<CreateRoomResponse>('/api/rooms', { method: 'POST', token }),
+  meta: (country?: string) =>
+    request<MetaResponse>(`/api/meta${country ? `?country=${encodeURIComponent(country)}` : ''}`),
+  createRoom: (token: string) =>
+    request<CreateRoomResponse>('/api/rooms', { method: 'POST', token }),
   getRoom: (token: string, roomId: string) =>
     request<RoomState | RoomPreview>(`/api/rooms/${encodeURIComponent(roomId)}`, { token }),
   roomCatalog: (token: string, roomId: string, q: CatalogQuery = {}) => {
@@ -79,6 +93,9 @@ export const api = {
     if (q.pageSize) params.set('pageSize', String(q.pageSize));
     if (q.genre) params.set('genre', q.genre);
     if (q.query) params.set('query', q.query);
-    return request<CommonCatalogResponse<CommonTitle>>(`/api/rooms/${encodeURIComponent(roomId)}/catalog?${params}`, { token });
+    return request<CommonCatalogResponse<CommonTitle>>(
+      `/api/rooms/${encodeURIComponent(roomId)}/catalog?${params}`,
+      { token },
+    );
   },
 };

@@ -70,7 +70,8 @@ export const normalizeProviderName = (s: string) =>
 
 export class TmdbClient implements CatalogProvider, MetadataProvider {
   readonly id = 'tmdb';
-  readonly attribution = 'Streaming availability by JustWatch, via TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB.';
+  readonly attribution =
+    'Streaming availability by JustWatch, via TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB.';
 
   private genres: { at: number; map: Map<number, string> } | null = null;
   private providerIds = new Map<
@@ -84,12 +85,17 @@ export class TmdbClient implements CatalogProvider, MetadataProvider {
     this.referenceTtlMs = opts.referenceTtlMs ?? 7 * 86_400_000;
   }
 
-  private get<T>(path: string, params: Record<string, string>, label: string, signal?: AbortSignal): Promise<T> {
+  private get<T>(
+    path: string,
+    params: Record<string, string>,
+    label: string,
+    signal?: AbortSignal,
+  ): Promise<T> {
     const qs = new URLSearchParams(params);
     const headers: Record<string, string> = {};
     if (this.opts.readToken) headers.authorization = `Bearer ${this.opts.readToken}`;
     else if (this.opts.apiKey) qs.set('api_key', this.opts.apiKey);
-    return fetchJson<T>(`${API}${path}?${qs}`, {
+    return fetchJson<T>(`${API}${path}?${qs.toString()}`, {
       headers,
       label,
       ...(signal ? { signal } : {}),
@@ -99,13 +105,22 @@ export class TmdbClient implements CatalogProvider, MetadataProvider {
 
   async genreNames(signal?: AbortSignal): Promise<Map<number, string>> {
     if (this.genres && Date.now() - this.genres.at < this.referenceTtlMs) return this.genres.map;
-    const data = await this.get<GenreResponse>('/genre/movie/list', { language: 'en-US' }, 'TMDB genres', signal);
+    const data = await this.get<GenreResponse>(
+      '/genre/movie/list',
+      { language: 'en-US' },
+      'TMDB genres',
+      signal,
+    );
     this.genres = { at: Date.now(), map: new Map(data.genres.map((g) => [g.id, g.name])) };
     return this.genres.map;
   }
 
   /** Provider ids for a service in a region: resolved by name, falling back to the registry. */
-  async resolveProviderIds(country: string, service: ServiceDefinition, signal?: AbortSignal): Promise<number[]> {
+  async resolveProviderIds(
+    country: string,
+    service: ServiceDefinition,
+    signal?: AbortSignal,
+  ): Promise<number[]> {
     let region = this.providerIds.get(country);
     if (!region || Date.now() - region.at >= this.referenceTtlMs) {
       try {
@@ -138,7 +153,11 @@ export class TmdbClient implements CatalogProvider, MetadataProvider {
     return ids;
   }
 
-  async fetchCatalog(country: string, service: ServiceDefinition, signal?: AbortSignal): Promise<ProviderCatalog> {
+  async fetchCatalog(
+    country: string,
+    service: ServiceDefinition,
+    signal?: AbortSignal,
+  ): Promise<ProviderCatalog> {
     const [providerIds, genres] = await Promise.all([
       this.resolveProviderIds(country, service, signal),
       this.genreNames(signal).catch(() => new Map<number, string>()),
@@ -152,12 +171,23 @@ export class TmdbClient implements CatalogProvider, MetadataProvider {
       language: 'en-US',
     };
     const label = `TMDB discover ${country}/${service.id}`;
-    const first = await this.get<DiscoverResponse>('/discover/movie', { ...base, page: '1' }, label, signal);
+    const first = await this.get<DiscoverResponse>(
+      '/discover/movie',
+      { ...base, page: '1' },
+      label,
+      signal,
+    );
     const lastPage = Math.min(first.total_pages, this.opts.maxPages, TMDB_MAX_PAGE);
     const rest = await mapWithConcurrency(
       Array.from({ length: Math.max(0, lastPage - 1) }, (_, i) => i + 2),
       4,
-      (page) => this.get<DiscoverResponse>('/discover/movie', { ...base, page: String(page) }, label, signal),
+      (page) =>
+        this.get<DiscoverResponse>(
+          '/discover/movie',
+          { ...base, page: String(page) },
+          label,
+          signal,
+        ),
     );
 
     const seen = new Set<number>();
@@ -185,7 +215,12 @@ export class TmdbClient implements CatalogProvider, MetadataProvider {
 
   async getMovie(tmdbId: number, signal?: AbortSignal): Promise<TitleMetadata | null> {
     try {
-      const m = await this.get<MovieResponse>(`/movie/${tmdbId}`, { language: 'en-US' }, `TMDB movie ${tmdbId}`, signal);
+      const m = await this.get<MovieResponse>(
+        `/movie/${tmdbId}`,
+        { language: 'en-US' },
+        `TMDB movie ${tmdbId}`,
+        signal,
+      );
       return {
         tmdbId: m.id,
         title: m.title,

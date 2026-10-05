@@ -75,16 +75,18 @@ export function createApiRouter(deps: RouteDeps): Router {
   const router = express.Router();
   const ipLimiter = new RateLimiter();
 
-  const limitByIp = (ratePerSec: number, burst: number) => (req: Request, _res: Response, next: NextFunction) => {
-    if (!ipLimiter.take(`${req.ip}:${req.path}`, { ratePerSec, burst })) {
-      return next(new HttpError(429, ErrorCode.RATE_LIMITED, 'Too many requests'));
-    }
-    next();
-  };
+  const limitByIp =
+    (ratePerSec: number, burst: number) => (req: Request, _res: Response, next: NextFunction) => {
+      if (!ipLimiter.take(`${req.ip}:${req.path}`, { ratePerSec, burst })) {
+        return next(new HttpError(429, ErrorCode.RATE_LIMITED, 'Too many requests'));
+      }
+      next();
+    };
 
   const requireSession = (req: Request, _res: Response, next: NextFunction) => {
     const session = deps.sessions.verify(bearerToken(req.header('authorization')));
-    if (!session) return next(new HttpError(401, ErrorCode.UNAUTHORIZED, 'Missing or invalid session token'));
+    if (!session)
+      return next(new HttpError(401, ErrorCode.UNAUTHORIZED, 'Missing or invalid session token'));
     req.userId = session.userId;
     next();
   };
@@ -97,7 +99,8 @@ export function createApiRouter(deps: RouteDeps): Router {
   });
 
   router.get('/meta', (req, res) => {
-    const country = typeof req.query.country === 'string' ? normalizeCountryCode(req.query.country) : null;
+    const country =
+      typeof req.query.country === 'string' ? normalizeCountryCode(req.query.country) : null;
     res.set('cache-control', 'public, max-age=3600').json({
       protocolVersion: PROTOCOL_VERSION,
       provider: deps.catalog.providerId,
@@ -140,7 +143,15 @@ export function createApiRouter(deps: RouteDeps): Router {
       if (!state) throw new HttpError(404, ErrorCode.ROOM_NOT_FOUND, 'Room not found');
       const isMember = state.members.some((m) => m.userId === req.userId);
       // Non-members (e.g. someone checking a code before joining) only learn it exists.
-      res.json(isMember ? state : { roomId: state.roomId, memberCount: state.members.length, maxMembers: MAX_ROOM_MEMBERS });
+      res.json(
+        isMember
+          ? state
+          : {
+              roomId: state.roomId,
+              memberCount: state.members.length,
+              maxMembers: MAX_ROOM_MEMBERS,
+            },
+      );
     } catch (err) {
       next(err);
     }
@@ -154,7 +165,11 @@ export function createApiRouter(deps: RouteDeps): Router {
       if (!state.members.some((m) => m.userId === req.userId)) {
         throw new HttpError(403, ErrorCode.NOT_IN_ROOM, 'Join the room first');
       }
-      const users = state.members.map((m) => ({ userId: m.userId, countryCode: m.countryCode, services: m.services }));
+      const users = state.members.map((m) => ({
+        userId: m.userId,
+        countryCode: m.countryCode,
+        services: m.services,
+      }));
       res.json(await deps.catalog.getCommonTitles(users, paging));
     } catch (err) {
       next(err);
@@ -167,21 +182,29 @@ export function createApiRouter(deps: RouteDeps): Router {
     }
     if (err instanceof z.ZodError) {
       return res.status(400).json({
-        error: { code: ErrorCode.BAD_REQUEST, message: err.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ') },
+        error: {
+          code: ErrorCode.BAD_REQUEST,
+          message: err.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; '),
+        },
       });
     }
     if (err instanceof InvalidSubscriptionError) {
       return res.status(400).json({ error: { code: ErrorCode.BAD_REQUEST, message: err.message } });
     }
     if (err instanceof CatalogUnavailableError) {
-      return res.status(503).json({ error: { code: ErrorCode.CATALOG_UNAVAILABLE, message: err.message } });
+      return res
+        .status(503)
+        .json({ error: { code: ErrorCode.CATALOG_UNAVAILABLE, message: err.message } });
     }
     if (err instanceof RoomError) {
-      const status = err.code === ErrorCode.ROOM_NOT_FOUND ? 404 : err.code === ErrorCode.FORBIDDEN ? 403 : 400;
+      const status =
+        err.code === ErrorCode.ROOM_NOT_FOUND ? 404 : err.code === ErrorCode.FORBIDDEN ? 403 : 400;
       return res.status(status).json({ error: err.toProtocol() });
     }
     if (err instanceof SyntaxError) {
-      return res.status(400).json({ error: { code: ErrorCode.BAD_REQUEST, message: 'Malformed JSON' } });
+      return res
+        .status(400)
+        .json({ error: { code: ErrorCode.BAD_REQUEST, message: 'Malformed JSON' } });
     }
     deps.logger.error({ err }, 'unhandled HTTP error');
     res.status(500).json({ error: { code: ErrorCode.INTERNAL, message: 'Something went wrong' } });

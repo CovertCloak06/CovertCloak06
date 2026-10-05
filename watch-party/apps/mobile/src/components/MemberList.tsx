@@ -54,7 +54,9 @@ export function MemberList({
             </Text>
             <Text style={{ color: c.muted, fontSize: 13 }}>
               {m.connected ? STATUS_TEXT[m.status] : 'Reconnecting…'}
-              {m.timecode !== null && (m.status === 'playing' || m.status === 'paused') ? ` · ${formatTimecode(m.timecode)}` : ''}
+              {m.timecode !== null && (m.status === 'playing' || m.status === 'paused')
+                ? ` · ${formatTimecode(m.timecode)}`
+                : ''}
               {' · '}
               {m.services.map(serviceName).join(', ')}
             </Text>

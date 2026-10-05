@@ -2,7 +2,8 @@ import { countryFlag, getService } from '@watch-party/shared/client';
 
 /** 3725.4 -> "1:02:05"; 65 -> "1:05". */
 export function formatTimecode(seconds: number | null | undefined): string {
-  if (seconds === null || seconds === undefined || !Number.isFinite(seconds) || seconds < 0) return '–:––';
+  if (seconds === null || seconds === undefined || !Number.isFinite(seconds) || seconds < 0)
+    return '–:––';
   const total = Math.floor(seconds);
   const h = Math.floor(total / 3600);
   const m = Math.floor((total % 3600) / 60);

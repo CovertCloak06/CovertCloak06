@@ -129,22 +129,32 @@ export class CatalogService {
     try {
       // Cross-instance single-flight: whoever holds the lock fetches, the rest
       // re-check the store once it is released.
-      return await this.store.withLock(`${NS}:lock:cat:${this.provider.id}:${country}:${serviceId}`, FETCH_LOCK_MS, async () => {
-        const again = await this.store.getJSON<CatalogMeta>(metaKey);
-        if (again && again.expiresAt > this.now()) return again;
-        return this.refreshCatalog(country, serviceId, key);
-      });
+      return await this.store.withLock(
+        `${NS}:lock:cat:${this.provider.id}:${country}:${serviceId}`,
+        FETCH_LOCK_MS,
+        async () => {
+          const again = await this.store.getJSON<CatalogMeta>(metaKey);
+          if (again && again.expiresAt > this.now()) return again;
+          return this.refreshCatalog(country, serviceId, key);
+        },
+      );
     } catch (err) {
       if (cached) {
         this.log.warn({ err, country, serviceId }, 'catalog refresh failed; serving stale catalog');
         return cached;
       }
       this.log.error({ err, country, serviceId }, 'catalog fetch failed');
-      throw new CatalogUnavailableError(`Catalog for ${serviceId} in ${country} is unavailable right now`);
+      throw new CatalogUnavailableError(
+        `Catalog for ${serviceId} in ${country} is unavailable right now`,
+      );
     }
   }
 
-  private async refreshCatalog(country: string, serviceId: string, key: string): Promise<CatalogMeta> {
+  private async refreshCatalog(
+    country: string,
+    serviceId: string,
+    key: string,
+  ): Promise<CatalogMeta> {
     const service = getService(serviceId);
     if (!service) throw new CatalogUnavailableError(`Unknown service ${serviceId}`);
     const started = this.now();
@@ -198,8 +208,11 @@ export class CatalogService {
     const pageSize = Math.min(Math.max(1, Math.floor(opts.pageSize ?? 20)), 100);
 
     const pairs = new Map<string, [string, string]>();
-    for (const u of users) for (const s of u.services) pairs.set(`${u.countryCode}:${s}`, [u.countryCode, s]);
-    const metas = await mapWithConcurrency([...pairs.values()], 4, ([c, s]) => this.ensureCatalog(c, s));
+    for (const u of users)
+      for (const s of u.services) pairs.set(`${u.countryCode}:${s}`, [u.countryCode, s]);
+    const metas = await mapWithConcurrency([...pairs.values()], 4, ([c, s]) =>
+      this.ensureCatalog(c, s),
+    );
     const partial = metas.some((m) => m.truncated);
 
     const commonKey = await this.computeCommonSet(users);
@@ -251,7 +264,10 @@ export class CatalogService {
   }
 
   /** Watch options for one title for each user (empty array where unavailable). */
-  async watchOptionsFor(tmdbId: number, rawUsers: UserSubscription[]): Promise<Record<string, WatchOption[]>> {
+  async watchOptionsFor(
+    tmdbId: number,
+    rawUsers: UserSubscription[],
+  ): Promise<Record<string, WatchOption[]>> {
     const users = dedupeUsers(rawUsers.map(normalizeSubscription));
     await mapWithConcurrency(
       [...new Set(users.flatMap((u) => u.services.map((s) => `${u.countryCode}:${s}`)))],
@@ -282,7 +298,10 @@ export class CatalogService {
     const titles = await this.enrich(ids);
 
     // One ZMSCORE + HMGET per (country, service) for the whole page.
-    const availability = new Map<string, { scores: Array<number | null>; links: Array<string | null> }>();
+    const availability = new Map<
+      string,
+      { scores: Array<number | null>; links: Array<string | null> }
+    >();
     await Promise.all(
       users.flatMap((u) =>
         u.services.map(async (s) => {
@@ -331,7 +350,10 @@ export class CatalogService {
 
     const missing = ids.filter((_, i) => {
       const s = stored[i];
-      return !details[i] && (!s || s.runtimeMinutes === null || s.overview === null || s.posterUrl === null);
+      return (
+        !details[i] &&
+        (!s || s.runtimeMinutes === null || s.overview === null || s.posterUrl === null)
+      );
     });
     const fetched = new Map<number, TitleMetadata>();
     if (this.metadata && missing.length > 0) {
@@ -388,5 +410,9 @@ function dedupeUsers(users: UserSubscription[]): UserSubscription[] {
 
 /** Lower-case and strip diacritics so "amelie" finds "Amélie". */
 function fold(s: string): string {
-  return s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
+  return s
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+    .trim();
 }

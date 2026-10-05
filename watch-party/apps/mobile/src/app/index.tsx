@@ -1,7 +1,14 @@
 import { countryFlag, getService } from '@watch-party/shared/client';
 import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  TextInput,
+  View,
+} from 'react-native';
 import { Banner, Body, Button, Card, Label, Screen, Title } from '@/components/ui';
 import { api, ApiError, type RoomPreview } from '@/lib/api';
 import { useApp } from '@/lib/app-context';
@@ -55,7 +62,11 @@ export default function Home() {
       }
       router.push({ pathname: '/room/[roomId]', params: { roomId } });
     } catch (err) {
-      setError(err instanceof ApiError && err.status === 404 ? 'No room with that code. Check it with your friend.' : (err as Error).message);
+      setError(
+        err instanceof ApiError && err.status === 404
+          ? 'No room with that code. Check it with your friend.'
+          : (err as Error).message,
+      );
     } finally {
       setBusy(null);
     }
@@ -63,16 +74,27 @@ export default function Home() {
 
   return (
     <Screen>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={{ padding: space.lg, gap: space.lg }} keyboardShouldPersistTaps="handled">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
+      >
+        <ScrollView
+          contentContainerStyle={{ padding: space.lg, gap: space.lg }}
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={{ gap: space.xs }}>
             <Title>Movie night, across borders</Title>
             <Body muted>
-              Find films every friend can stream on their own subscriptions in their own country, then watch in sync.
+              Find films every friend can stream on their own subscriptions in their own country,
+              then watch in sync.
             </Body>
           </View>
 
-          {sessionError ? <Banner tone="danger" action={{ label: 'Retry', onPress: retrySession }}>{sessionError}</Banner> : null}
+          {sessionError ? (
+            <Banner tone="danger" action={{ label: 'Retry', onPress: retrySession }}>
+              {sessionError}
+            </Banner>
+          ) : null}
           {error ? <Banner tone="warning">{error}</Banner> : null}
 
           <Card style={{ gap: space.sm }}>
@@ -81,12 +103,22 @@ export default function Home() {
               {countryFlag(profile.country)} {profile.displayName}
             </Body>
             <Body muted>{profile.services.map((s) => getService(s)?.name ?? s).join(' · ')}</Body>
-            <Button label="Edit streaming setup" variant="ghost" onPress={() => router.push('/profile')} style={{ alignSelf: 'flex-start' }} />
+            <Button
+              label="Edit streaming setup"
+              variant="ghost"
+              onPress={() => router.push('/profile')}
+              style={{ alignSelf: 'flex-start' }}
+            />
           </Card>
 
           <Card style={{ gap: space.md }}>
             <Label>Host</Label>
-            <Button label="Start a watch party" onPress={create} loading={busy === 'create'} disabled={!session || busy !== null} />
+            <Button
+              label="Start a watch party"
+              onPress={create}
+              loading={busy === 'create'}
+              disabled={!session || busy !== null}
+            />
           </Card>
 
           <Card style={{ gap: space.md }}>
@@ -113,7 +145,13 @@ export default function Home() {
                 backgroundColor: c.bg,
               }}
             />
-            <Button label="Join party" variant="secondary" onPress={join} loading={busy === 'join'} disabled={!session || busy !== null || code.length === 0} />
+            <Button
+              label="Join party"
+              variant="secondary"
+              onPress={join}
+              loading={busy === 'join'}
+              disabled={!session || busy !== null || code.length === 0}
+            />
           </Card>
         </ScrollView>
       </KeyboardAvoidingView>

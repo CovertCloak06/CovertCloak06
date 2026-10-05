@@ -1,4 +1,11 @@
-import { createContext, useContext, useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from 'react';
 import type { Profile } from './profile-model';
 import { RoomStore, type RoomSnapshot } from './room-store';
 
@@ -17,7 +24,10 @@ export function RoomProvider({
 }) {
   const [store, setStore] = useState<RoomStore | null>(null);
   useEffect(() => {
+    // Opening a socket is a side effect, so the store is created here rather
+    // than during render (StrictMode would otherwise leak a connection).
     const s = new RoomStore(roomId, session, profile);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- publishing an external resource created by this effect
     setStore(s);
     return () => s.dispose();
     // A profile edit mid-room takes effect on the next join, not by reconnecting.

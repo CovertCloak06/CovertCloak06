@@ -12,7 +12,15 @@ import { Banner, Body, Button, Card, Label } from './ui';
  * native player, so sync becomes manual: everyone sees the room's live
  * position and the host can run a synchronised countdown.
  */
-export function NativeFallback({ option, reason, onTryWebView }: { option: WatchOption; reason: string; onTryWebView?: () => void }) {
+export function NativeFallback({
+  option,
+  reason,
+  onTryWebView,
+}: {
+  option: WatchOption;
+  reason: string;
+  onTryWebView?: () => void;
+}) {
   const c = usePalette();
   const store = useRoomStore();
   const { state } = useRoom();
@@ -38,7 +46,9 @@ export function NativeFallback({ option, reason, onTryWebView }: { option: Watch
   };
 
   const startTogether = () => {
-    void store.client.scheduleStart(Math.max(0, roomTime ?? 0), 5_000).catch((e: Error) => Alert.alert(e.message));
+    void store.client
+      .scheduleStart(Math.max(0, roomTime ?? 0), 5_000)
+      .catch((e: Error) => Alert.alert(e.message));
   };
 
   const paused = state?.playback.paused ?? true;
@@ -47,14 +57,18 @@ export function NativeFallback({ option, reason, onTryWebView }: { option: Watch
       <Banner tone="info">{reason}</Banner>
       <Card style={{ gap: space.md }}>
         <Label>Room position</Label>
-        <Text style={{ color: c.text, fontSize: 48, fontWeight: '800', fontVariant: ['tabular-nums'] }} accessibilityLiveRegion="polite">
+        <Text
+          style={{ color: c.text, fontSize: 48, fontWeight: '800', fontVariant: ['tabular-nums'] }}
+          accessibilityLiveRegion="polite"
+        >
           {formatTimecode(roomTime)}
         </Text>
         <Body muted>{paused ? 'Paused' : 'Playing'} · scrub your app to this time</Body>
         <Button label={`Open in ${option.serviceName}`} onPress={() => void openApp()} />
         {!option.directLink ? (
           <Body muted style={{ fontSize: 13 }}>
-            No direct link for this title on {option.serviceName}, so you'll land on its search. Look for “{state?.selection?.title}”.
+            No direct link for this title on {option.serviceName}, so you'll land on its search.
+            Look for “{state?.selection?.title}”.
           </Body>
         ) : null}
       </Card>
@@ -65,7 +79,13 @@ export function NativeFallback({ option, reason, onTryWebView }: { option: Watch
             ? 'Get everyone paused at the same moment, then run a 5-second countdown. Everyone presses play on zero.'
             : 'The host can run a countdown. When it hits zero, press play in your app.'}
         </Body>
-        {isHost ? <Button label="Run countdown from room position" variant="secondary" onPress={startTogether} /> : null}
+        {isHost ? (
+          <Button
+            label="Run countdown from room position"
+            variant="secondary"
+            onPress={startTogether}
+          />
+        ) : null}
       </Card>
       {onTryWebView ? (
         <View>

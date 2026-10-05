@@ -77,14 +77,7 @@ export type SyncActionType = 'PLAY' | 'PAUSE' | 'SEEK';
  * the native app (deep link) and syncing manually from the countdown.
  */
 export type MemberStatus =
-  | 'idle'
-  | 'loading'
-  | 'ready'
-  | 'playing'
-  | 'paused'
-  | 'buffering'
-  | 'blocked'
-  | 'fallback';
+  'idle' | 'loading' | 'ready' | 'playing' | 'paused' | 'buffering' | 'blocked' | 'fallback';
 
 export const MEMBER_STATUSES: readonly MemberStatus[] = [
   'idle',

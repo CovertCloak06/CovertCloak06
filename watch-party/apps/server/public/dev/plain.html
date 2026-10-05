@@ -5,13 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Plain Video Page</title>
     <style>
-      body { margin: 0; background: #000; }
-      video { width: 100%; }
+      body {
+        margin: 0;
+        background: #000;
+      }
+      video {
+        width: 100%;
+      }
     </style>
   </head>
   <body>
     <!-- A bare page with a video and no watch party code: the browser
          extension's content script provides the sync (dev builds match localhost). -->
-    <video id="video" src="/dev/media/sample.webm" controls muted playsinline preload="auto"></video>
+    <video
+      id="video"
+      src="/dev/media/sample.webm"
+      controls
+      muted
+      playsinline
+      preload="auto"
+    ></video>
   </body>
 </html>

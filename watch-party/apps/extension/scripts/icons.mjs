@@ -31,18 +31,33 @@ export function drawIcon(size) {
     return (x - cx) ** 2 + (y - cy) ** 2 <= r * r;
   };
   // Play triangle
-  const ax = s * 0.38, ay = s * 0.28, bx = s * 0.38, by = s * 0.72, cx2 = s * 0.74, cy2 = s * 0.5;
-  const sign = (px1, py1, px2, py2, px3, py3) => (px1 - px3) * (py2 - py3) - (px2 - px3) * (py1 - py3);
+  const ax = s * 0.38,
+    ay = s * 0.28,
+    bx = s * 0.38,
+    by = s * 0.72,
+    cx2 = s * 0.74,
+    cy2 = s * 0.5;
+  const sign = (px1, py1, px2, py2, px3, py3) =>
+    (px1 - px3) * (py2 - py3) - (px2 - px3) * (py1 - py3);
   const inTriangle = (x, y) => {
-    const d1 = sign(x, y, ax, ay, bx, by), d2 = sign(x, y, bx, by, cx2, cy2), d3 = sign(x, y, cx2, cy2, ax, ay);
+    const d1 = sign(x, y, ax, ay, bx, by),
+      d2 = sign(x, y, bx, by, cx2, cy2),
+      d3 = sign(x, y, cx2, cy2, ax, ay);
     return !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0));
   };
   for (let y = 0; y < s; y++) {
     for (let x = 0; x < s; x++) {
       // 4x supersampling for smooth edges
-      let bg = 0, fg = 0;
-      for (const [ox, oy] of [[0.25, 0.25], [0.75, 0.25], [0.25, 0.75], [0.75, 0.75]]) {
-        const fx = x + ox, fy = y + oy;
+      let bg = 0,
+        fg = 0;
+      for (const [ox, oy] of [
+        [0.25, 0.25],
+        [0.75, 0.25],
+        [0.25, 0.75],
+        [0.75, 0.75],
+      ]) {
+        const fx = x + ox,
+          fy = y + oy;
         if (inRoundedSquare(fx, fy)) {
           bg++;
           if (inTriangle(fx, fy)) fg++;
@@ -52,7 +67,8 @@ export function drawIcon(size) {
       // Gradient violet background, white triangle.
       const t = y / s;
       const [br, bgc, bb] = [91 + 40 * t, 63 + 10 * t, 217 - 30 * t];
-      const a = bg / 4, f = fg / 4;
+      const a = bg / 4,
+        f = fg / 4;
       px[i] = Math.round(br * (1 - f / Math.max(a, 1e-6)) + 255 * (f / Math.max(a, 1e-6)));
       px[i + 1] = Math.round(bgc * (1 - f / Math.max(a, 1e-6)) + 255 * (f / Math.max(a, 1e-6)));
       px[i + 2] = Math.round(bb * (1 - f / Math.max(a, 1e-6)) + 255 * (f / Math.max(a, 1e-6)));

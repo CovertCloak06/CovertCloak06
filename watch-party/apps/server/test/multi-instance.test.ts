@@ -7,7 +7,15 @@ import type { Ack, RelayedSyncAction, RoomState } from '@watch-party/shared';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { FixtureCatalogProvider } from '../src/catalog/providers/fixture.js';
 import { RedisStore } from '../src/store/redis.js';
-import { connectSocket, createRoom, emitAck, newSession, nextEvent, startApp, type RunningApp } from './helpers.js';
+import {
+  connectSocket,
+  createRoom,
+  emitAck,
+  newSession,
+  nextEvent,
+  startApp,
+  type RunningApp,
+} from './helpers.js';
 
 const REDIS_URL = process.env.TEST_REDIS_URL;
 
@@ -17,8 +25,22 @@ describe.skipIf(!REDIS_URL)('multiple instances sharing Redis', () => {
 
   beforeAll(async () => {
     const env = { REDIS_URL: REDIS_URL! };
-    one = await startApp({ store: RedisStore.connect(REDIS_URL!), provider: new FixtureCatalogProvider(), metadata: null }, env);
-    two = await startApp({ store: RedisStore.connect(REDIS_URL!), provider: new FixtureCatalogProvider(), metadata: null }, env);
+    one = await startApp(
+      {
+        store: RedisStore.connect(REDIS_URL!),
+        provider: new FixtureCatalogProvider(),
+        metadata: null,
+      },
+      env,
+    );
+    two = await startApp(
+      {
+        store: RedisStore.connect(REDIS_URL!),
+        provider: new FixtureCatalogProvider(),
+        metadata: null,
+      },
+      env,
+    );
   });
   afterAll(async () => {
     await one?.close();
@@ -32,14 +54,29 @@ describe.skipIf(!REDIS_URL)('multiple instances sharing Redis', () => {
     const sa = await connectSocket(one.url, ana.token);
     const sb = await connectSocket(two.url, ben.token);
     try {
-      await emitAck<Ack<RoomState>>(sa, 'JOIN_ROOM', { roomId, country: 'US', services: ['netflix'] });
+      await emitAck<Ack<RoomState>>(sa, 'JOIN_ROOM', {
+        roomId,
+        country: 'US',
+        services: ['netflix'],
+      });
       const seen = nextEvent<RoomState>(sa, 'ROOM_STATE', 5_000, (s) => s.members.length === 2);
-      const joined = await emitAck<Ack<RoomState>>(sb, 'JOIN_ROOM', { roomId, country: 'GB', services: ['netflix'] });
+      const joined = await emitAck<Ack<RoomState>>(sb, 'JOIN_ROOM', {
+        roomId,
+        country: 'GB',
+        services: ['netflix'],
+      });
       expect(joined.ok).toBe(true);
-      expect((await seen).members.map((m) => m.userId).sort()).toEqual([ana.userId, ben.userId].sort());
+      expect((await seen).members.map((m) => m.userId).sort()).toEqual(
+        [ana.userId, ben.userId].sort(),
+      );
 
       const relayed = nextEvent<RelayedSyncAction>(sb, 'SYNC_ACTION', 5_000);
-      await emitAck(sa, 'SYNC_ACTION', { roomId, action: 'PAUSE', timecode: 77, timestamp: Date.now() });
+      await emitAck(sa, 'SYNC_ACTION', {
+        roomId,
+        action: 'PAUSE',
+        timecode: 77,
+        timestamp: Date.now(),
+      });
       expect(await relayed).toMatchObject({ senderId: ana.userId, action: 'PAUSE', timecode: 77 });
     } finally {
       sa.disconnect();

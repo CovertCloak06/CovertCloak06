@@ -7,7 +7,12 @@
  * Privacy: the controller only touches <video> elements; it never reads
  * inputs, forms, cookies or storage on the streaming site.
  */
-import { createNetflixAdapter, genericAdapter, PlayerController, validatePlayerCommand } from '@watch-party/shared/player';
+import {
+  createNetflixAdapter,
+  genericAdapter,
+  PlayerController,
+  validatePlayerCommand,
+} from '@watch-party/shared/player';
 import type { BackgroundToContent, ContentToBackground } from './messages';
 
 let controller: PlayerController | null = null;
@@ -38,11 +43,15 @@ function connect() {
     switch (msg.type) {
       case 'activate':
         if (!controller) {
-          const adapter = msg.adapter === 'netflix' ? createNetflixAdapter(netflixSeekViaMainWorld) : genericAdapter;
+          const adapter =
+            msg.adapter === 'netflix'
+              ? createNetflixAdapter(netflixSeekViaMainWorld)
+              : genericAdapter;
           controller = new PlayerController({
             doc: document,
             adapter,
-            send: (event) => port?.postMessage({ type: 'event', event } satisfies ContentToBackground),
+            send: (event) =>
+              port?.postMessage({ type: 'event', event } satisfies ContentToBackground),
           });
           controller.start();
         }

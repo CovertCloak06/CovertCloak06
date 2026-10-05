@@ -53,7 +53,8 @@ export class RedisStore implements Store {
   async msetJSON(entries: Array<[string, unknown]>, ttlMs: number): Promise<void> {
     for (let i = 0; i < entries.length; i += 500) {
       const pipe = this.client.pipeline();
-      for (const [k, v] of entries.slice(i, i + 500)) pipe.set(k, JSON.stringify(v), 'PX', Math.ceil(ttlMs));
+      for (const [k, v] of entries.slice(i, i + 500))
+        pipe.set(k, JSON.stringify(v), 'PX', Math.ceil(ttlMs));
       await pipe.exec();
     }
   }
@@ -103,7 +104,12 @@ export class RedisStore implements Store {
     await tx.exec();
   }
 
-  async zunionStore(dest: string, keys: string[], aggregate: Aggregate, ttlMs: number): Promise<number> {
+  async zunionStore(
+    dest: string,
+    keys: string[],
+    aggregate: Aggregate,
+    ttlMs: number,
+  ): Promise<number> {
     const [[, count]] = (await this.client
       .multi()
       .zunionstore(dest, keys.length, ...keys, 'AGGREGATE', aggregate)
@@ -112,7 +118,12 @@ export class RedisStore implements Store {
     return count;
   }
 
-  async zinterStore(dest: string, keys: string[], aggregate: Aggregate, ttlMs: number): Promise<number> {
+  async zinterStore(
+    dest: string,
+    keys: string[],
+    aggregate: Aggregate,
+    ttlMs: number,
+  ): Promise<number> {
     const [[, count]] = (await this.client
       .multi()
       .zinterstore(dest, keys.length, ...keys, 'AGGREGATE', aggregate)

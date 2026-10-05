@@ -19,7 +19,12 @@ async function main(): Promise<void> {
   const app = createApp(config, logger);
   const port = await app.listen();
   logger.info(
-    { port, provider: config.catalog.provider, store: app.store.kind, devHarness: config.devHarness },
+    {
+      port,
+      provider: config.catalog.provider,
+      store: app.store.kind,
+      devHarness: config.devHarness,
+    },
     'watch party server listening',
   );
   if (config.devHarness) logger.info(`dev harness: http://localhost:${port}/dev/`);

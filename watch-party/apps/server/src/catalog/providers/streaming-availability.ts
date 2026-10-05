@@ -74,7 +74,11 @@ export class StreamingAvailabilityProvider implements CatalogProvider {
     }
   }
 
-  async fetchCatalog(country: string, service: ServiceDefinition, signal?: AbortSignal): Promise<ProviderCatalog> {
+  async fetchCatalog(
+    country: string,
+    service: ServiceDefinition,
+    signal?: AbortSignal,
+  ): Promise<ProviderCatalog> {
     const cc = country.toLowerCase();
     const entries: ProviderTitle[] = [];
     const seen = new Set<number>();
@@ -91,12 +95,15 @@ export class StreamingAvailabilityProvider implements CatalogProvider {
         output_language: 'en',
       });
       if (cursor) params.set('cursor', cursor);
-      const data = await fetchJson<SaSearchResponse>(`${this.base}/shows/search/filters?${params}`, {
-        headers: this.headers,
-        label: `Streaming Availability ${country}/${service.id}`,
-        ...(signal ? { signal } : {}),
-        ...(this.opts.fetchImpl ? { fetchImpl: this.opts.fetchImpl } : {}),
-      });
+      const data = await fetchJson<SaSearchResponse>(
+        `${this.base}/shows/search/filters?${params.toString()}`,
+        {
+          headers: this.headers,
+          label: `Streaming Availability ${country}/${service.id}`,
+          ...(signal ? { signal } : {}),
+          ...(this.opts.fetchImpl ? { fetchImpl: this.opts.fetchImpl } : {}),
+        },
+      );
       page++;
 
       for (const show of data.shows ?? []) {

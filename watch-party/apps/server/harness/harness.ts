@@ -10,7 +10,12 @@
  * Open two tabs on /dev/?room=CODE to watch them stay in sync. Playwright's
  * e2e suite drives this page.
  */
-import { RoomSyncClient, parsePlayerEvent, wrapPlayerMessage, type PlayerCommand } from '@watch-party/shared/client';
+import {
+  RoomSyncClient,
+  parsePlayerEvent,
+  wrapPlayerMessage,
+  type PlayerCommand,
+} from '@watch-party/shared/client';
 import { io } from 'socket.io-client';
 
 declare global {
@@ -18,7 +23,13 @@ declare global {
     __WATCH_PARTY_CONFIG__?: { nonce: string; adapter: 'generic' | 'netflix' };
     __watchParty?: { receive(raw: unknown): void };
     ReactNativeWebView?: { postMessage(message: string): void };
-    harness?: { client: RoomSyncClient; video: HTMLVideoElement; roomId: string; userId: string; log: string[] };
+    harness?: {
+      client: RoomSyncClient;
+      video: HTMLVideoElement;
+      roomId: string;
+      userId: string;
+      log: string[];
+    };
   }
 }
 
@@ -52,7 +63,8 @@ async function main() {
   const session = await api<{ userId: string; token: string }>('/api/session', { method: 'POST' });
   let roomId = params.get('room')?.toUpperCase();
   if (!roomId) {
-    roomId = (await api<{ roomId: string }>('/api/rooms', { method: 'POST', token: session.token })).roomId;
+    roomId = (await api<{ roomId: string }>('/api/rooms', { method: 'POST', token: session.token }))
+      .roomId;
     history.replaceState(null, '', `?room=${roomId}&name=${encodeURIComponent(name)}`);
   }
   $('room').textContent = roomId;
@@ -78,18 +90,29 @@ async function main() {
       $('members').appendChild(li);
     }
     $('role').textContent = client.isHost ? 'host' : 'guest';
-    ($('hostOnly') as HTMLInputElement).checked = s.settings.hostOnlyControl;
+    $<HTMLInputElement>('hostOnly').checked = s.settings.hostOnlyControl;
   });
-  client.on('remoteAction', (a) => log(`remote ${a.action} @ ${a.timecode.toFixed(2)} from ${a.senderId}`));
-  client.on('drift', (d) => ($('drift').textContent = d === null ? '–' : `${(d * 1000).toFixed(0)} ms`));
+  client.on('remoteAction', (a) =>
+    log(`remote ${a.action} @ ${a.timecode.toFixed(2)} from ${a.senderId}`),
+  );
+  client.on(
+    'drift',
+    (d) => ($('drift').textContent = d === null ? '–' : `${(d * 1000).toFixed(0)} ms`),
+  );
   client.on('error', (e) => log(`error ${e.code}: ${e.message}`));
   client.on('autoplayBlocked', () => log('autoplay blocked: press play to rejoin'));
-  client.on('scheduled', (s) => log(`start scheduled at ${s.timecode}s in ${Math.round(s.startAtLocal - Date.now())} ms`));
+  client.on('scheduled', (s) =>
+    log(`start scheduled at ${s.timecode}s in ${Math.round(s.startAtLocal - Date.now())} ms`),
+  );
   client.on('connection', (c) => log(`socket ${c}`));
 
-  await new Promise<void>((resolve) => (socket.connected ? resolve() : socket.once('connect', () => resolve())));
+  await new Promise<void>((resolve) =>
+    socket.connected ? resolve() : socket.once('connect', () => resolve()),
+  );
   await client.join();
-  log(`joined ${roomId} as ${session.userId} (clock offset ${client.clock.offsetMs.toFixed(1)} ms)`);
+  log(
+    `joined ${roomId} as ${session.userId} (clock offset ${client.clock.offsetMs.toFixed(1)} ms)`,
+  );
 
   // --- WebView emulation -------------------------------------------------------
   const nonce = crypto.getRandomValues(new Uint32Array(4)).join('-');
@@ -97,7 +120,8 @@ async function main() {
     postMessage(raw) {
       const event = parsePlayerEvent(raw, nonce);
       if (!event) return;
-      if (event.type === 'PLAYER_EVENT') log(`local ${event.action} @ ${event.timecode.toFixed(2)}`);
+      if (event.type === 'PLAYER_EVENT')
+        log(`local ${event.action} @ ${event.timecode.toFixed(2)}`);
       client.handlePlayerEvent(event);
     },
   };
@@ -120,7 +144,9 @@ async function main() {
     if (other) void client.transferHost(other.userId).catch((e) => log(String(e)));
   });
   $('hostOnly').addEventListener('change', (e) => {
-    void client.setHostOnlyControl((e.target as HTMLInputElement).checked).catch((err) => log(String(err)));
+    void client
+      .setHostOnlyControl((e.target as HTMLInputElement).checked)
+      .catch((err) => log(String(err)));
   });
   $('countdown').addEventListener('click', () => {
     void client.scheduleStart(video.currentTime, 3_000).catch((e) => log(String(e)));

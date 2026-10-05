@@ -1,43 +1,77 @@
 import { describe, expect, it } from 'vitest';
-import { ClockSync, computeCorrection, projectTimecode, sanitizeTimestamp, SYNC_RULES } from '../src/sync.js';
+import {
+  ClockSync,
+  computeCorrection,
+  projectTimecode,
+  sanitizeTimestamp,
+  SYNC_RULES,
+} from '../src/sync.js';
 
 describe('projectTimecode', () => {
   it('advances playing state by elapsed time and rate', () => {
-    expect(projectTimecode({ paused: false, timecode: 100, timestamp: 1_000, playbackRate: 1 }, 3_000)).toBe(102);
-    expect(projectTimecode({ paused: false, timecode: 100, timestamp: 1_000, playbackRate: 1.5 }, 3_000)).toBe(103);
+    expect(
+      projectTimecode({ paused: false, timecode: 100, timestamp: 1_000, playbackRate: 1 }, 3_000),
+    ).toBe(102);
+    expect(
+      projectTimecode({ paused: false, timecode: 100, timestamp: 1_000, playbackRate: 1.5 }, 3_000),
+    ).toBe(103);
   });
   it('does not move paused state or go backwards', () => {
-    expect(projectTimecode({ paused: true, timecode: 50, timestamp: 0, playbackRate: 1 }, 99_999)).toBe(50);
-    expect(projectTimecode({ paused: false, timecode: 50, timestamp: 5_000, playbackRate: 1 }, 1_000)).toBe(50);
+    expect(
+      projectTimecode({ paused: true, timecode: 50, timestamp: 0, playbackRate: 1 }, 99_999),
+    ).toBe(50);
+    expect(
+      projectTimecode({ paused: false, timecode: 50, timestamp: 5_000, playbackRate: 1 }, 1_000),
+    ).toBe(50);
   });
   it('caps projection of stale states', () => {
     const max = SYNC_RULES.maxProjectionMs / 1000;
-    expect(projectTimecode({ paused: false, timecode: 0, timestamp: 0, playbackRate: 1 }, 10 * 60_000)).toBe(max);
+    expect(
+      projectTimecode({ paused: false, timecode: 0, timestamp: 0, playbackRate: 1 }, 10 * 60_000),
+    ).toBe(max);
   });
 });
 
 describe('computeCorrection', () => {
   it('hard seeks beyond 1.0s of drift while playing', () => {
-    expect(computeCorrection({ local: 10, target: 11.2, paused: false })).toMatchObject({ kind: 'seek', target: 11.2 });
+    expect(computeCorrection({ local: 10, target: 11.2, paused: false })).toMatchObject({
+      kind: 'seek',
+      target: 11.2,
+    });
     expect(computeCorrection({ local: 12.01, target: 11, paused: false }).kind).toBe('seek');
   });
   it('speeds up when slightly behind and slows down when slightly ahead', () => {
-    expect(computeCorrection({ local: 10, target: 10.5, paused: false })).toMatchObject({ kind: 'rate', rate: 1.05 });
-    expect(computeCorrection({ local: 10.5, target: 10, paused: false })).toMatchObject({ kind: 'rate', rate: 0.95 });
+    expect(computeCorrection({ local: 10, target: 10.5, paused: false })).toMatchObject({
+      kind: 'rate',
+      rate: 1.05,
+    });
+    expect(computeCorrection({ local: 10.5, target: 10, paused: false })).toMatchObject({
+      kind: 'rate',
+      rate: 0.95,
+    });
   });
   it('ignores drift inside the deadband', () => {
-    expect(computeCorrection({ local: 10, target: 10.1, paused: false })).toEqual({ kind: 'none', rate: 1 });
+    expect(computeCorrection({ local: 10, target: 10.1, paused: false })).toEqual({
+      kind: 'none',
+      rate: 1,
+    });
   });
   it('keeps nudging until drift is inside the release band (hysteresis)', () => {
-    expect(computeCorrection({ local: 10, target: 10.1, paused: false, currentRate: 1.05 }).kind).toBe('rate');
-    expect(computeCorrection({ local: 10, target: 10.04, paused: false, currentRate: 1.05 }).kind).toBe('none');
+    expect(
+      computeCorrection({ local: 10, target: 10.1, paused: false, currentRate: 1.05 }).kind,
+    ).toBe('rate');
+    expect(
+      computeCorrection({ local: 10, target: 10.04, paused: false, currentRate: 1.05 }).kind,
+    ).toBe('none');
   });
   it('uses the tighter threshold while paused and never nudges rate', () => {
     expect(computeCorrection({ local: 10, target: 10.3, paused: true }).kind).toBe('seek');
     expect(computeCorrection({ local: 10, target: 10.2, paused: true }).kind).toBe('none');
   });
   it('never nudges players that do not support rate changes', () => {
-    expect(computeCorrection({ local: 10, target: 10.5, paused: false, supportsRate: false }).kind).toBe('none');
+    expect(
+      computeCorrection({ local: 10, target: 10.5, paused: false, supportsRate: false }).kind,
+    ).toBe('none');
   });
 });
 

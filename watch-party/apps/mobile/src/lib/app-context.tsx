@@ -1,5 +1,13 @@
 import type { SessionResponse } from '@watch-party/shared/client';
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 import type { Profile } from './profile-model';
 import { loadOrCreateSession, loadProfile, saveProfile } from './storage';
 
@@ -8,8 +16,8 @@ interface AppContextValue {
   session: SessionResponse | null;
   sessionError: string | null;
   profile: Profile | null;
-  updateProfile(profile: Profile): Promise<void>;
-  retrySession(): void;
+  updateProfile: (profile: Profile) => Promise<void>;
+  retrySession: () => void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -30,10 +38,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    setSessionError(null);
     loadOrCreateSession()
       .then((s) => !cancelled && setSession(s))
-      .catch((err: unknown) => !cancelled && setSessionError(err instanceof Error ? err.message : 'Could not start a session'));
+      .catch(
+        (err: unknown) =>
+          !cancelled &&
+          setSessionError(err instanceof Error ? err.message : 'Could not start a session'),
+      );
     return () => {
       cancelled = true;
     };
@@ -51,7 +62,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       sessionError,
       profile,
       updateProfile,
-      retrySession: () => setAttempt((n) => n + 1),
+      retrySession: () => {
+        setSessionError(null);
+        setAttempt((n) => n + 1);
+      },
     }),
     [profileLoaded, session, sessionError, profile, updateProfile],
   );

@@ -1,5 +1,12 @@
 /** Messages between the extension's popup, background worker and content scripts. */
-import type { CommonCatalogResponse, CommonTitle, PlayerCommand, PlayerEvent, ProtocolError, RoomState } from '@watch-party/shared/client';
+import type {
+  CommonCatalogResponse,
+  CommonTitle,
+  PlayerCommand,
+  PlayerEvent,
+  ProtocolError,
+  RoomState,
+} from '@watch-party/shared/client';
 
 export interface Profile {
   displayName: string;

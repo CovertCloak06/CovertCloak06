@@ -38,7 +38,9 @@ export const INJECTED_PLAYER_SCRIPT: string = ${JSON.stringify(code)};
 if (process.argv.includes('--check')) {
   const current = await readFile(outFile, 'utf8').catch(() => '');
   if (current !== contents) {
-    console.error('src/generated/injected-script.ts is stale. Run: npm run build -w @watch-party/shared');
+    console.error(
+      'src/generated/injected-script.ts is stale. Run: npm run build -w @watch-party/shared',
+    );
     process.exit(1);
   }
   console.log(`injected script up to date (${hash}, ${code.length} bytes)`);

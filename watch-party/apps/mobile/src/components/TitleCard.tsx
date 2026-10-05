@@ -15,7 +15,11 @@ export function TitleCard({
   disabled?: boolean;
 }) {
   const c = usePalette();
-  const meta = [title.releaseYear, formatRuntime(title.runtimeMinutes), title.genres.slice(0, 2).join(' · ')]
+  const meta = [
+    title.releaseYear,
+    formatRuntime(title.runtimeMinutes),
+    title.genres.slice(0, 2).join(' · '),
+  ]
     .filter(Boolean)
     .join('  ·  ');
   return (
@@ -25,13 +29,27 @@ export function TitleCard({
       accessibilityRole={onPress ? 'button' : 'text'}
       accessibilityLabel={`${title.title}${title.releaseYear ? `, ${title.releaseYear}` : ''}`}
       accessibilityHint={onPress ? 'Choose this film for everyone' : undefined}
-      style={({ pressed }) => [styles.card, { backgroundColor: c.card, borderColor: c.border, opacity: pressed ? 0.85 : 1 }]}
+      style={({ pressed }) => [
+        styles.card,
+        { backgroundColor: c.card, borderColor: c.border, opacity: pressed ? 0.85 : 1 },
+      ]}
     >
       {title.posterUrl ? (
-        <Image source={{ uri: title.posterUrl }} style={styles.poster} accessibilityIgnoresInvertColors />
+        <Image
+          source={{ uri: title.posterUrl }}
+          style={styles.poster}
+          accessibilityIgnoresInvertColors
+        />
       ) : (
-        <View style={[styles.poster, { backgroundColor: c.elevated, alignItems: 'center', justifyContent: 'center' }]}>
-          <Text style={{ color: c.muted, fontSize: 28, fontWeight: '800' }}>{title.title.slice(0, 1)}</Text>
+        <View
+          style={[
+            styles.poster,
+            { backgroundColor: c.elevated, alignItems: 'center', justifyContent: 'center' },
+          ]}
+        >
+          <Text style={{ color: c.muted, fontSize: 28, fontWeight: '800' }}>
+            {title.title.slice(0, 1)}
+          </Text>
         </View>
       )}
       <View style={{ flex: 1, gap: space.xs }}>

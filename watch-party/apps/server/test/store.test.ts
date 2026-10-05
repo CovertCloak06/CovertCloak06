@@ -23,14 +23,27 @@ function storeContract(name: string, make: () => Store, cleanup: (s: Store) => P
       expect(await store.getJSON(k('a'))).toEqual({ x: 1 });
       expect(await store.setJSONIfAbsent(k('a'), { x: 2 })).toBe(false);
       expect(await store.setJSONIfAbsent(k('b'), { x: 3 }, 10_000)).toBe(true);
-      expect(await store.mgetJSON([k('a'), k('missing'), k('b')])).toEqual([{ x: 1 }, null, { x: 3 }]);
+      expect(await store.mgetJSON([k('a'), k('missing'), k('b')])).toEqual([
+        { x: 1 },
+        null,
+        { x: 3 },
+      ]);
       await store.setJSON(k('short'), 1, 30);
       await new Promise((r) => setTimeout(r, 80));
       expect(await store.getJSON(k('short'))).toBeNull();
     });
 
     it('replaces sorted sets atomically with companion hashes', async () => {
-      await store.replaceSortedSet(k('z1'), [[5, '1'], [9, '2'], [1, '3']], 10_000, { key: k('h1'), fields: { '2': 'link2' } });
+      await store.replaceSortedSet(
+        k('z1'),
+        [
+          [5, '1'],
+          [9, '2'],
+          [1, '3'],
+        ],
+        10_000,
+        { key: k('h1'), fields: { '2': 'link2' } },
+      );
       expect(await store.zrevrange(k('z1'), 0, -1)).toEqual(['2', '1', '3']);
       expect(await store.zmscore(k('z1'), ['1', 'nope'])).toEqual([5, null]);
       expect(await store.hmget(k('h1'), ['1', '2'])).toEqual([null, 'link2']);
@@ -40,9 +53,30 @@ function storeContract(name: string, make: () => Store, cleanup: (s: Store) => P
     });
 
     it('unions and intersects with aggregation like Redis', async () => {
-      await store.replaceSortedSet(k('a1'), [[1, 'x'], [5, 'y']], 10_000);
-      await store.replaceSortedSet(k('a2'), [[3, 'x'], [2, 'z']], 10_000);
-      await store.replaceSortedSet(k('b1'), [[10, 'x'], [1, 'z']], 10_000);
+      await store.replaceSortedSet(
+        k('a1'),
+        [
+          [1, 'x'],
+          [5, 'y'],
+        ],
+        10_000,
+      );
+      await store.replaceSortedSet(
+        k('a2'),
+        [
+          [3, 'x'],
+          [2, 'z'],
+        ],
+        10_000,
+      );
+      await store.replaceSortedSet(
+        k('b1'),
+        [
+          [10, 'x'],
+          [1, 'z'],
+        ],
+        10_000,
+      );
       expect(await store.zunionStore(k('u'), [k('a1'), k('a2')], 'MAX', 10_000)).toBe(3);
       expect(await store.zscore(k('u'), 'x')).toBe(3);
       expect(await store.zinterStore(k('i'), [k('u'), k('b1')], 'MAX', 10_000)).toBe(2);
@@ -69,7 +103,11 @@ function storeContract(name: string, make: () => Store, cleanup: (s: Store) => P
   });
 }
 
-storeContract('memory', () => new MemoryStore(), async () => undefined);
+storeContract(
+  'memory',
+  () => new MemoryStore(),
+  async () => undefined,
+);
 
 if (REDIS_URL) {
   storeContract(

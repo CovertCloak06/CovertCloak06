@@ -8,7 +8,10 @@ const join = (svc: RoomService, roomId: string, userId: string) =>
 describe('RoomService', () => {
   it('prunes long-disconnected members and re-elects the host even if grace timers were lost', async () => {
     let now = 1_000_000;
-    const svc = new RoomService(new MemoryStore(() => now), { now: () => now, staleMemberMs: 60_000 });
+    const svc = new RoomService(new MemoryStore(() => now), {
+      now: () => now,
+      staleMemberMs: 60_000,
+    });
     const roomId = await svc.create('u_host');
     await join(svc, roomId, 'u_host');
     now += 10;

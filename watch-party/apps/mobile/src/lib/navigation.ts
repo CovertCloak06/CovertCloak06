@@ -20,7 +20,11 @@ export type NavigationDecision = 'allow' | 'external' | 'block';
  * - Sub-frames (DRM license frames, embedded players) are allowed over https.
  * - Other https pages open in the system browser; anything else is blocked.
  */
-export function decideNavigation(url: string, isTopFrame: boolean, service: ServiceDefinition): NavigationDecision {
+export function decideNavigation(
+  url: string,
+  isTopFrame: boolean,
+  service: ServiceDefinition,
+): NavigationDecision {
   let parsed: URL;
   try {
     parsed = new URL(url);
@@ -52,7 +56,12 @@ export function initialPlaybackMode(option: Pick<WatchOption, 'mobileWeb'>): Pla
 /** Picks the option to load: prefer services that play inside the WebView. */
 export function preferredOption(options: readonly WatchOption[]): WatchOption | null {
   const rank = { supported: 0, limited: 1, unsupported: 2 } as const;
-  return [...options].sort((a, b) => rank[a.mobileWeb] - rank[b.mobileWeb] || Number(b.directLink) - Number(a.directLink))[0] ?? null;
+  return (
+    [...options].sort(
+      (a, b) =>
+        rank[a.mobileWeb] - rank[b.mobileWeb] || Number(b.directLink) - Number(a.directLink),
+    )[0] ?? null
+  );
 }
 
 /** The player adapter id for a service (Netflix needs its own seek path). */

@@ -1,8 +1,17 @@
 import { getService, type WatchOption } from '@watch-party/shared/client';
 import { describe, expect, it } from 'vitest';
 import { countdownSeconds, formatDrift, formatRuntime, formatTimecode } from '../src/lib/format.js';
-import { adapterFor, decideNavigation, initialPlaybackMode, preferredOption } from '../src/lib/navigation.js';
-import { parseStoredProfile, reconcileServices, validateProfile } from '../src/lib/profile-model.js';
+import {
+  adapterFor,
+  decideNavigation,
+  initialPlaybackMode,
+  preferredOption,
+} from '../src/lib/navigation.js';
+import {
+  parseStoredProfile,
+  reconcileServices,
+  validateProfile,
+} from '../src/lib/profile-model.js';
 import { normalizeRoomCode, shareLink } from '../src/lib/room-code.js';
 
 const netflix = getService('netflix')!;
@@ -30,7 +39,11 @@ describe('decideNavigation', () => {
 });
 
 describe('playback mode', () => {
-  const option = (serviceId: string, mobileWeb: WatchOption['mobileWeb'], directLink = true): WatchOption => ({
+  const option = (
+    serviceId: string,
+    mobileWeb: WatchOption['mobileWeb'],
+    directLink = true,
+  ): WatchOption => ({
     serviceId,
     serviceName: serviceId,
     countryCode: 'US',
@@ -44,8 +57,12 @@ describe('playback mode', () => {
     expect(initialPlaybackMode(option('prime', 'limited'))).toBe('webview');
   });
   it('prefers options that play in the WebView, then direct links', () => {
-    expect(preferredOption([option('netflix', 'unsupported'), option('max', 'limited')])?.serviceId).toBe('max');
-    expect(preferredOption([option('a', 'limited', false), option('b', 'limited', true)])?.serviceId).toBe('b');
+    expect(
+      preferredOption([option('netflix', 'unsupported'), option('max', 'limited')])?.serviceId,
+    ).toBe('max');
+    expect(
+      preferredOption([option('a', 'limited', false), option('b', 'limited', true)])?.serviceId,
+    ).toBe('b');
     expect(preferredOption([])).toBeNull();
   });
   it('maps services to player adapters', () => {
@@ -76,19 +93,25 @@ describe('format', () => {
 
 describe('profile', () => {
   it('validates names, countries and regional services', () => {
-    expect(validateProfile({ displayName: 'Ana', country: 'US', services: ['netflix', 'hulu'] })).toEqual({});
+    expect(
+      validateProfile({ displayName: 'Ana', country: 'US', services: ['netflix', 'hulu'] }),
+    ).toEqual({});
     expect(validateProfile({ displayName: ' ', country: 'XX', services: [] })).toMatchObject({
       displayName: expect.any(String),
       country: expect.any(String),
       services: expect.any(String),
     });
-    expect(validateProfile({ displayName: 'Ben', country: 'GB', services: ['hulu'] }).services).toMatch(/not sold/);
+    expect(
+      validateProfile({ displayName: 'Ben', country: 'GB', services: ['hulu'] }).services,
+    ).toMatch(/not sold/);
   });
   it('drops services that are not sold after a country change', () => {
     expect(reconcileServices('GB', ['netflix', 'hulu', 'now'])).toEqual(['netflix', 'now']);
   });
   it('parses stored profiles defensively', () => {
-    expect(parseStoredProfile('{"displayName":"Ana","country":"US","services":["netflix"]}')).toEqual({
+    expect(
+      parseStoredProfile('{"displayName":"Ana","country":"US","services":["netflix"]}'),
+    ).toEqual({
       displayName: 'Ana',
       country: 'US',
       services: ['netflix'],

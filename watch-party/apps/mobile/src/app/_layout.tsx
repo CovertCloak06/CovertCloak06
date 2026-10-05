@@ -19,7 +19,10 @@ export default function RootLayout() {
           }}
         >
           <Stack.Screen name="index" options={{ title: 'Watch Party' }} />
-          <Stack.Screen name="profile" options={{ title: 'Your streaming setup', presentation: 'modal' }} />
+          <Stack.Screen
+            name="profile"
+            options={{ title: 'Your streaming setup', presentation: 'modal' }}
+          />
           <Stack.Screen name="room/[roomId]" options={{ headerShown: false }} />
         </Stack>
       </AppProvider>

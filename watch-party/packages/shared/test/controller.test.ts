@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createNetflixAdapter, genericAdapter } from '../src/player/adapters.js';
 import { PlayerController } from '../src/player/controller.js';
 import type { PlayerEvent } from '../src/player/messages.js';
-import { createFakeVideo, type FakeVideo, type FakeVideoOptions } from './fake-video.js';
+import { createFakeVideo, type FakeVideoOptions } from './fake-video.js';
 
 let events: PlayerEvent[];
 let controller: PlayerController | null;
@@ -17,7 +17,9 @@ function setup(opts: FakeVideoOptions = {}, adapter = genericAdapter) {
 }
 
 const actions = () =>
-  events.filter((e): e is Extract<PlayerEvent, { type: 'PLAYER_EVENT' }> => e.type === 'PLAYER_EVENT');
+  events.filter(
+    (e): e is Extract<PlayerEvent, { type: 'PLAYER_EVENT' }> => e.type === 'PLAYER_EVENT',
+  );
 
 async function flush(ms: number) {
   await vi.advanceTimersByTimeAsync(ms);
@@ -37,7 +39,11 @@ afterEach(() => {
 
 describe('video discovery', () => {
   it('attaches to a video that appears after start and follows replacements', async () => {
-    controller = new PlayerController({ doc: document, adapter: genericAdapter, send: (e) => events.push(e) });
+    controller = new PlayerController({
+      doc: document,
+      adapter: genericAdapter,
+      send: (e) => events.push(e),
+    });
     controller.start();
     expect(controller.currentVideo).toBeNull();
 
@@ -60,7 +66,9 @@ describe('video discovery', () => {
     video.fake.time = 42;
     events = [];
     await flush(1_000);
-    expect(events).toContainEqual(expect.objectContaining({ type: 'PLAYER_STATUS', timecode: 42, paused: true }));
+    expect(events).toContainEqual(
+      expect.objectContaining({ type: 'PLAYER_STATUS', timecode: 42, paused: true }),
+    );
   });
 });
 
@@ -117,7 +125,12 @@ describe('echo suppression', () => {
 
   it('projects a remote play forward by its age and seeks past the 1s threshold', async () => {
     const { video, controller } = setup();
-    controller.handleCommand({ type: 'APPLY', action: 'PLAY', timecode: 100, asOf: Date.now() - 3_000 });
+    controller.handleCommand({
+      type: 'APPLY',
+      action: 'PLAY',
+      timecode: 100,
+      asOf: Date.now() - 3_000,
+    });
     await flush(100);
     expect(video.fake.seekWrites).toEqual([103]);
     expect(video.paused).toBe(false);
@@ -139,15 +152,33 @@ describe('drift correction', () => {
     video.fake.paused = false;
 
     video.fake.time = 99.5;
-    controller.handleCommand({ type: 'SYNC', timecode: 100, asOf: Date.now(), paused: false, playbackRate: 1 });
+    controller.handleCommand({
+      type: 'SYNC',
+      timecode: 100,
+      asOf: Date.now(),
+      paused: false,
+      playbackRate: 1,
+    });
     expect(video.playbackRate).toBe(1.05);
 
     video.fake.time = 100.02;
-    controller.handleCommand({ type: 'SYNC', timecode: 100, asOf: Date.now(), paused: false, playbackRate: 1 });
+    controller.handleCommand({
+      type: 'SYNC',
+      timecode: 100,
+      asOf: Date.now(),
+      paused: false,
+      playbackRate: 1,
+    });
     expect(video.playbackRate).toBe(1);
 
     video.fake.time = 97;
-    controller.handleCommand({ type: 'SYNC', timecode: 100, asOf: Date.now(), paused: false, playbackRate: 1 });
+    controller.handleCommand({
+      type: 'SYNC',
+      timecode: 100,
+      asOf: Date.now(),
+      paused: false,
+      playbackRate: 1,
+    });
     expect(video.fake.seekWrites).toEqual([100]);
     await flush(500);
     expect(actions()).toEqual([]);
@@ -155,7 +186,13 @@ describe('drift correction', () => {
 
   it('fixes a play/pause mismatch with a discrete action', async () => {
     const { video, controller } = setup();
-    controller.handleCommand({ type: 'SYNC', timecode: 10, asOf: Date.now(), paused: false, playbackRate: 1 });
+    controller.handleCommand({
+      type: 'SYNC',
+      timecode: 10,
+      asOf: Date.now(),
+      paused: false,
+      playbackRate: 1,
+    });
     await flush(10);
     expect(video.paused).toBe(false);
     expect(actions()).toEqual([]);
@@ -167,7 +204,9 @@ describe('autoplay policy', () => {
     const { video, controller } = setup({ blockAutoplay: true });
     controller.handleCommand({ type: 'APPLY', action: 'PLAY', timecode: 500, asOf: Date.now() });
     await flush(10);
-    expect(events).toContainEqual(expect.objectContaining({ type: 'PLAYER_ERROR', code: 'AUTOPLAY_BLOCKED' }));
+    expect(events).toContainEqual(
+      expect.objectContaining({ type: 'PLAYER_ERROR', code: 'AUTOPLAY_BLOCKED' }),
+    );
     // The remote PLAY seeked us to 500 already; 20s later the user taps play.
     await flush(20_000);
     video.fake.blockAutoplay = false;
@@ -181,7 +220,9 @@ describe('autoplay policy', () => {
 describe('media errors', () => {
   it('reports playback failures so the host can offer the native app', async () => {
     const { video } = setup();
-    Object.defineProperty(video, 'error', { get: () => ({ code: 4, message: 'DRM not supported' }) });
+    Object.defineProperty(video, 'error', {
+      get: () => ({ code: 4, message: 'DRM not supported' }),
+    });
     video.dispatchEvent(new Event('error'));
     expect(events).toContainEqual({
       type: 'PLAYER_ERROR',
@@ -200,7 +241,10 @@ describe('netflix adapter', () => {
     expect(video.fake.seekWrites).toEqual([]);
   });
   it('falls back to currentTime when the API is unavailable', () => {
-    const { video, controller } = setup({}, createNetflixAdapter(() => false));
+    const { video, controller } = setup(
+      {},
+      createNetflixAdapter(() => false),
+    );
     controller.handleCommand({ type: 'APPLY', action: 'SEEK', timecode: 10, asOf: Date.now() });
     expect(video.fake.seekWrites).toEqual([10]);
   });
