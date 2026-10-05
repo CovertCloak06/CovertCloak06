@@ -1,0 +1,27 @@
+# Local production-like stack: server + Redis.
+#   SESSION_SECRET=$(openssl rand -hex 32) TMDB_READ_TOKEN=... docker compose up --build
+services:
+  redis:
+    image: redis:7-alpine
+    command: ['redis-server', '--save', '', '--appendonly', 'no']
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      retries: 10
+
+  server:
+    build: .
+    ports:
+      - '8080:8080'
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      REDIS_URL: redis://redis:6379
+      SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET (32+ characters)}
+      STREAMING_AVAILABILITY_API_KEY: ${STREAMING_AVAILABILITY_API_KEY:-}
+      TMDB_READ_TOKEN: ${TMDB_READ_TOKEN:-}
+      # Without either key the server refuses to start in production, unless:
+      ALLOW_FIXTURE_CATALOG: ${ALLOW_FIXTURE_CATALOG:-0}
+      TRUST_PROXY: ${TRUST_PROXY:-0}

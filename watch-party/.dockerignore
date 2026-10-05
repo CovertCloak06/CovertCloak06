@@ -1,0 +1,13 @@
+**/node_modules
+**/dist
+**/build
+**/coverage
+**/test-results
+**/playwright-report
+**/.expo
+apps/server/public/dev/media
+apps/mobile/*
+!apps/mobile/package.json
+apps/extension/*
+!apps/extension/package.json
+.git

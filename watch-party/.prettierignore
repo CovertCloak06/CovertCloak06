@@ -1,0 +1,12 @@
+node_modules
+dist
+build
+coverage
+package-lock.json
+**/generated/**
+apps/mobile/.expo
+apps/server/public/dev/*.js
+apps/server/public/dev/*.js.map
+apps/server/public/dev/media
+test-results
+playwright-report

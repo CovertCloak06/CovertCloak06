@@ -1,0 +1,42 @@
+{
+  "name": "@watch-party/shared",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Protocol, catalog, sync and player-controller code shared by the watch party server, mobile app and browser extension.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./client": {
+      "types": "./dist/client-entry.d.ts",
+      "default": "./dist/client-entry.js"
+    },
+    "./player": {
+      "types": "./dist/player/index.d.ts",
+      "default": "./dist/player/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "node scripts/build-injected.mjs && tsc -p tsconfig.build.json",
+    "check:generated": "node scripts/build-injected.mjs --check",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "jsdom": "^30.1.2",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.3"
+  }
+}
