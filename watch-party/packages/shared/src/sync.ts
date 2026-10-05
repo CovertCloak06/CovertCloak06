@@ -30,8 +30,6 @@ export const SYNC_RULES = {
   slowDownRate: 0.95,
   /** How often the host reports its playhead while playing. */
   heartbeatIntervalMs: 2_000,
-  /** Actions older than this on arrival are applied without time projection. */
-  maxProjectionMs: 10_000,
   /** Client timestamps further than this from server time are distrusted. */
   maxClientSkewMs: 5_000,
 } as const;
@@ -45,15 +43,22 @@ export interface TimedPlayback {
   playbackRate: number;
 }
 
+/** Longest playhead the projection will produce (matches the protocol's 24h limit). */
+const MAX_PROJECTED_SECONDS = 24 * 60 * 60;
+
 /**
  * Where the playhead is now, given a state that was accurate at some earlier
- * moment. Paused states don't move. Projection is capped so a stale state
- * (e.g. after a long disconnect) can't throw the playhead far into the film.
+ * moment. Paused states don't move; a state stamped in the future (a
+ * scheduled start) hasn't started moving yet.
+ *
+ * Projection is deliberately not capped by age: "playing since T" stays true
+ * until someone pauses, and members watching in a native app (no heartbeats)
+ * rely on this clock for the whole film.
  */
 export function projectTimecode(state: TimedPlayback, nowMs: number): number {
   if (state.paused) return state.timecode;
-  const elapsedMs = Math.min(Math.max(0, nowMs - state.timestamp), SYNC_RULES.maxProjectionMs);
-  return state.timecode + (elapsedMs / 1000) * state.playbackRate;
+  const elapsedMs = Math.max(0, nowMs - state.timestamp);
+  return Math.min(state.timecode + (elapsedMs / 1000) * state.playbackRate, MAX_PROJECTED_SECONDS);
 }
 
 export type Correction =

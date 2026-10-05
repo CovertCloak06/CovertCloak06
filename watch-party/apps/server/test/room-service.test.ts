@@ -25,6 +25,27 @@ describe('RoomService', () => {
     expect(state.state.hostId).toBe('u_guest');
   });
 
+  it('never expires a member who reconnected before the grace expiry ran', async () => {
+    const svc = new RoomService(new MemoryStore());
+    const roomId = await svc.create('u_a');
+    await join(svc, roomId, 'u_a');
+    await join(svc, roomId, 'u_b');
+    await svc.markDisconnected(roomId, 'u_a');
+    // Reconnect and expiry race: the rejoin wins the lock first.
+    const [, expired] = await Promise.all([
+      join(svc, roomId, 'u_a'),
+      svc.expireIfDisconnected(roomId, 'u_a'),
+    ]);
+    const state = (await svc.get(roomId))!;
+    expect(state.members.map((m) => m.userId).sort()).toEqual(['u_a', 'u_b']);
+    expect(expired).toBeNull();
+    // A member who really stayed away is removed.
+    await svc.markDisconnected(roomId, 'u_b');
+    expect((await svc.expireIfDisconnected(roomId, 'u_b'))!.members.map((m) => m.userId)).toEqual([
+      'u_a',
+    ]);
+  });
+
   it('makes the first joiner host when the creator never joins', async () => {
     const svc = new RoomService(new MemoryStore());
     const roomId = await svc.create('u_creator');

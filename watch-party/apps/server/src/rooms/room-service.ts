@@ -275,10 +275,21 @@ export class RoomService {
 
   /** Removes the member only if still disconnected (they may have come back). */
   async expireIfDisconnected(roomId: string, userId: string): Promise<RoomState | null> {
-    const room = await this.store.getJSON<StoredRoom>(this.key(roomId));
-    const m = room?.members.find((x) => x.userId === userId);
-    if (!m || m.connected) return null;
-    return this.leave(roomId, userId);
+    try {
+      // Check and removal happen in one locked mutation, so a reconnect that
+      // lands in between can't be undone by a removal decided on stale data.
+      const { room, result } = await this.mutate(roomId, (room) => {
+        const m = room.members.find((x) => x.userId === userId);
+        if (!m || m.connected) return false;
+        room.members = room.members.filter((x) => x.userId !== userId);
+        if (room.hostId === userId) promoteHost(room);
+        return true;
+      });
+      return result ? this.snapshot(room) : null;
+    } catch (err) {
+      if (err instanceof RoomError && err.code === ErrorCode.ROOM_NOT_FOUND) return null;
+      throw err;
+    }
   }
 
   async applyAction(

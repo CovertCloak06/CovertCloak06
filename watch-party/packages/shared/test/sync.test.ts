@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  ClockSync,
-  computeCorrection,
-  projectTimecode,
-  sanitizeTimestamp,
-  SYNC_RULES,
-} from '../src/sync.js';
+import { ClockSync, computeCorrection, projectTimecode, sanitizeTimestamp } from '../src/sync.js';
 
 describe('projectTimecode', () => {
   it('advances playing state by elapsed time and rate', () => {
@@ -24,11 +18,18 @@ describe('projectTimecode', () => {
       projectTimecode({ paused: false, timecode: 50, timestamp: 5_000, playbackRate: 1 }, 1_000),
     ).toBe(50);
   });
-  it('caps projection of stale states', () => {
-    const max = SYNC_RULES.maxProjectionMs / 1000;
+  it('keeps advancing for long-running playback and clamps at 24h', () => {
+    // Native-app fallback members rely on this clock for a whole film.
+    const twoHours = 2 * 3_600_000;
     expect(
-      projectTimecode({ paused: false, timecode: 0, timestamp: 0, playbackRate: 1 }, 10 * 60_000),
-    ).toBe(max);
+      projectTimecode({ paused: false, timecode: 30, timestamp: 0, playbackRate: 1 }, twoHours),
+    ).toBe(30 + 7_200);
+    expect(
+      projectTimecode(
+        { paused: false, timecode: 0, timestamp: 0, playbackRate: 1 },
+        30 * 3_600_000,
+      ),
+    ).toBe(86_400);
   });
 });
 
