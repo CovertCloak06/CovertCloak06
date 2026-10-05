@@ -1,0 +1,25 @@
+{
+  "name": "watch-party",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Cross-country watch party: find titles common to every member's regional subscriptions and watch them in sync.",
+  "workspaces": [
+    "packages/shared",
+    "apps/server",
+    "apps/extension",
+    "apps/mobile"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "npm run build -w @watch-party/shared && npm run build -w @watch-party/server && npm run build -w @watch-party/extension",
+    "typecheck": "npm run build -w @watch-party/shared && npm run typecheck --workspaces --if-present",
+    "test": "npm run build -w @watch-party/shared && npm test --workspaces --if-present",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "dev:server": "npm run build -w @watch-party/shared && npm run dev -w @watch-party/server",
+    "test:e2e": "npm run test:e2e -w @watch-party/server"
+  }
+}

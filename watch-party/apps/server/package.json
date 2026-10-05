@@ -1,0 +1,40 @@
+{
+  "name": "@watch-party/server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Catalog intersection API and real-time sync server for the watch party app.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node scripts/build-harness.mjs",
+    "build:harness": "node scripts/build-harness.mjs",
+    "dev": "node scripts/build-harness.mjs && tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.browser.json --noEmit",
+    "test": "vitest run",
+    "media": "bash scripts/make-sample-media.sh",
+    "test:e2e": "node scripts/build-harness.mjs && bash scripts/make-sample-media.sh && playwright test"
+  },
+  "dependencies": {
+    "@socket.io/redis-adapter": "^8.3.0",
+    "@watch-party/shared": "0.1.0",
+    "cors": "^2.8.5",
+    "express": "^5.2.1",
+    "helmet": "^8.3.0",
+    "ioredis": "^5.11.1",
+    "pino": "^10.4.0",
+    "socket.io": "^4.8.4",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^22.18.0",
+    "esbuild": "^0.28.2",
+    "socket.io-client": "^4.8.4",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.3"
+  }
+}

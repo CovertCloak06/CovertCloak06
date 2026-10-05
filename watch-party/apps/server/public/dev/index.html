@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Watch Party Harness</title>
+    <link rel="stylesheet" href="/dev/harness.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Watch party sync harness</h1>
+      <p>
+        Room <strong id="room">…</strong> · you are <strong id="role">…</strong> · drift vs host
+        <strong id="drift">–</strong> · <a id="share" target="_blank" rel="noopener">open another member</a>
+      </p>
+    </header>
+    <main>
+      <video id="video" src="/dev/media/sample.webm" controls muted playsinline preload="auto"></video>
+      <aside>
+        <h2>Members</h2>
+        <ul id="members"></ul>
+        <div class="controls">
+          <button id="makeHost" type="button">Give host to someone else</button>
+          <label><input id="hostOnly" type="checkbox" /> Host-only control</label>
+          <button id="countdown" type="button">3-second synced start</button>
+        </div>
+        <h2>Log</h2>
+        <pre id="log"></pre>
+      </aside>
+    </main>
+    <script src="/dev/harness.js"></script>
+  </body>
+</html>

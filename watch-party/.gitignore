@@ -1,0 +1,12 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+# generated test media for the dev harness (see apps/server/scripts/make-sample-media.sh)
+apps/server/public/dev/media/
+test-results/
+playwright-report/
+apps/extension/build/
